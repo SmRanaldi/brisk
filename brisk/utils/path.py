@@ -2,6 +2,8 @@ from tkinter import Tk, filedialog
 
 import os
 
+# -----
+
 # Asks for a folder where the data is stored, 
 # as it's saved by the system
 def get_folder():
