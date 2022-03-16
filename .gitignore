@@ -48,3 +48,10 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# ----------------
+
+# Custom
+test_local/
+test*
+# brisk/test_local/
