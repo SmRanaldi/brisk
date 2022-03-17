@@ -22,6 +22,7 @@ setup(
             'brisk_load_imu=brisk.scripts.import:import_imu',
             'show_brisk_folders=brisk.scripts.utils_scripts:show_folders',
             'show_imu_config=brisk.scripts.utils_scripts:show_imu_config',
+            'set_brisk_outdir=brisk.scripts.utils_scripts:set_out_dir',
         ]
     },
     package_data = {

@@ -46,11 +46,14 @@ def import_imu_data():
         path.make_directory(s_dir)
 
         conditions = _parse_conditions(base_dir)
-        for condition, file in zip(conditions, files):
-            cond_dir = os.path.join(s_dir, condition)
-            path.make_directory(cond_dir)
-            rawdata_dir = os.path.join(cond_dir, 'rawdata')
-            path.make_directory(rawdata_dir)
-            _save_imu_df(os.path.join(base_dir,file), imus, os.path.join(rawdata_dir,'imu.csv'))
+        if len(conditions) == len(files):
+            for condition, file in zip(conditions, files):
+                cond_dir = os.path.join(s_dir, condition)
+                path.make_directory(cond_dir)
+                rawdata_dir = os.path.join(cond_dir, 'rawdata')
+                path.make_directory(rawdata_dir)
+                _save_imu_df(os.path.join(base_dir,file), imus, os.path.join(rawdata_dir,'imu.csv'))
+        else:
+            print('Different number of conditions and data files, aborting.')
 
     return

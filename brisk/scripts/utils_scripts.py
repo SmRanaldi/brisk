@@ -2,6 +2,7 @@ import os
 import json
 
 import brisk
+from brisk.utils import settings
 
 def hello():
     print('Hello, BRISK user!')
@@ -17,3 +18,10 @@ def show_imu_config():
         imus = json.load(f)
     print(json.dumps(imus, indent=4))
     return
+
+def set_out_dir():
+    print('\nSelect directory for output files.')
+    settings.set_directory()
+    with open(brisk.config_file_path, 'r') as f:
+        print('\nNew output folder set to:')
+        print(f"\t {json.load(f)['output_dir']}\n")
