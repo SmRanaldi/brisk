@@ -18,8 +18,10 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'hello_brisk=brisk.scripts.hello:hello',
+            'hello_brisk=brisk.scripts.utils_scripts:hello',
             'brisk_load_imu=brisk.scripts.import:import_imu',
+            'show_brisk_folders=brisk.scripts.utils_scripts:show_folders',
+            'show_imu_config=brisk.scripts.utils_scripts:show_imu_config',
         ]
     },
     package_data = {
