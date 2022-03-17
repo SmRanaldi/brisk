@@ -15,7 +15,10 @@ def get_folder():
 
     root.destroy()
 
-    return open_file
+    if not open_file:
+        return 
+    else:
+        return os.path.normpath(open_file)
 
 # Gets IMU data filenames from a folder
 def get_imu_filename(dirname):
@@ -29,3 +32,11 @@ def get_imu_filename(dirname):
 def join_path(components):
 
     return os.path.normpath(os.path.join(*components))
+
+# Wrapper for mkdir, with error management
+def make_directory(path_in):
+    if not os.path.isdir(path_in):
+        try:
+            os.mkdir(path_in)
+        except OSError as error:
+            print(error)  
