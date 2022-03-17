@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 
-from brisk import config_dir
+from brisk import config_dir, out_dir
 from brisk.utils import path
 
 # ----- Auxiliary functions -----
@@ -41,8 +41,6 @@ def import_imu_data():
         sname = base_dir.split(os.sep)[-1]
         with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
             imus = json.load(f)
-        with open(os.path.join(config_dir,'directories.json'), 'r') as f:
-            out_dir = json.load(f)['output_dir']
 
         s_dir = os.path.join(out_dir, sname)
         path.make_directory(s_dir)
