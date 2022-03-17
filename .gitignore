@@ -55,3 +55,4 @@ docs/_build/
 test_local/
 test*
 # brisk/test_local/
+brisk/config/directories.json
