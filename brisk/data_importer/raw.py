@@ -24,7 +24,7 @@ def _save_imu_df(path_in, schema_in, path_out):
     data = pd.read_csv(path_in)
     for (k,v) in schema_in.items():
         data.columns = [x.replace(v,k) for x in data.columns]
-    data.iloc[:,:-1].to_csv(path_out)
+    data.iloc[:,:-1].to_csv(path_out, index=False)
 
 
 # ----- Main functions -----

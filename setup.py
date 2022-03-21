@@ -14,7 +14,8 @@ setup(
         'python-dateutil==2.8.2',
         'pytz==2021.3',
         'six==1.16.0',
-        'wincertstore==0.2'
+        'wincertstore==0.2',
+        'matplotlib',
     ],
     entry_points = {
         'console_scripts': [
@@ -23,6 +24,7 @@ setup(
             'show_brisk_folders=brisk.scripts.utils_scripts:show_folders',
             'show_imu_config=brisk.scripts.utils_scripts:show_imu_config',
             'set_brisk_outdir=brisk.scripts.utils_scripts:set_out_dir',
+            'brisk_subjects=brisk.scripts.utils_scripts:print_subjects',
         ]
     },
     package_data = {
