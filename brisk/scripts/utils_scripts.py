@@ -37,7 +37,7 @@ def set_out_dir():
 # in the database
 def print_subjects():
     subjects = [x for x in os.listdir(brisk.out_dir) 
-        if os.path.isdir(os.path.join(brisk.out_dir,x))]
+        if os.path.isdir(os.path.join(brisk.out_dir,x)) and not x.startswith('_')]
     print('\nDatabase directory:')
     print(f'\t{brisk.out_dir}\n')
     print('Trials found:')
