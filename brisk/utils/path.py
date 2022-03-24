@@ -2,6 +2,8 @@ from tkinter import Tk, filedialog
 
 import os
 
+import brisk
+
 # -----
 
 # Asks for a folder where the data is stored, 
@@ -40,3 +42,27 @@ def make_directory(path_in):
             os.mkdir(path_in)
         except OSError as error:
             print(error)  
+
+def get_trials(subject):
+    if not search_subject(subject):
+        exit()
+    else:
+        trials = [x for x in os.listdir(os.path.join(brisk.out_dir, subject))
+                if os.path.isdir(os.path.join(brisk.out_dir, subject, x))]
+        return trials
+
+# Search if a subject exists
+def search_subject(subject):
+    if not os.path.exists(os.path.join(brisk.out_dir, subject)):
+        print(f'Subject {subject} not found in the database.')
+        return False
+    else:
+        return True
+
+# Search if a trial exists
+def search_trial(subject, trial):
+    if not os.path.exists(os.path.join(brisk.out_dir, subject, trial)):
+        print(f'Trial {trial} of subject {subject} not found in the database.')
+        return False
+    else:
+        return True
