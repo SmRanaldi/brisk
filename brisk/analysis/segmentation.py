@@ -9,6 +9,7 @@ import os
 
 from brisk.data_loader import trials
 from brisk.utils.signal import norm_autocorrelation, norm_templatematching
+from brisk.utils import path
 from brisk import out_dir
 
 # ----- Constants -----
@@ -52,7 +53,6 @@ def _get_segmentation_indexes(subject, trial):
 def _filter_data(subject, trial):
     data_file = os.path.join(out_dir, subject, trial, 'segmented_imu.csv')
     if not os.path.exists(data_file):
-        print('\nSegmentation not found, calculating...\n')
         update_indexes(subject, trial)
     data_in = pd.read_csv(data_file)
     b, a = sgn.butter(3, 5/(fs/2), btype='low')
@@ -64,12 +64,13 @@ def _filter_data(subject, trial):
 
 # Calculate average profiles
 def _calculate_average(subject, trial):
-    data_file = os.path.join(out_dir, subject, trial, 'segmented_imu.csv')
+    data_file = os.path.join(out_dir, subject, trial, 'filtered_imu.csv')
     if not os.path.exists(data_file):
         print('\nSegmentation not found, calculating...\n')
-        update_indexes(subject, trial)
+        _filter_data(subject, trial)
     movements = []
-    indexes, data = load_indexes(subject, trial)
+    indexes = load_indexes(subject, trial)
+    data = get_filtered_data(subject, trial)
     for i in range(len(indexes)-1):
         segm = data.values[indexes[i]:indexes[i+1],:]
         segm_interp = interp1d(np.linspace(0,segm.shape[0],segm.shape[0]),segm, axis=0)(np.linspace(0,segm.shape[0],n_points))
@@ -107,9 +108,8 @@ def load_indexes(subject, trial):
         update_indexes(subject, trial)
     
     indexes = pd.read_csv(index_file)
-    data = pd.read_csv(data_file)
 
-    return indexes.values.squeeze(), data
+    return indexes.values.squeeze()
 
 # Get the filtered data from memory
 def get_filtered_data(subject, trial):
@@ -136,3 +136,10 @@ def get_template(subject, trial):
         print('\nNo template found, calculating...\n')
         update_indexes(subject, trial)
     return pd.read_csv(data_file).values.squeeze()
+
+# Get frequencies
+def get_frequencies(subject):
+    trials_list = path.get_trials(subject)
+    idx = {k: load_indexes(subject,k) for k in trials_list}
+    frequencies = {k: 60/(np.diff(idx[k])/fs) for k in trials_list}
+    return frequencies

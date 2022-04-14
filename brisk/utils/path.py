@@ -43,6 +43,7 @@ def make_directory(path_in):
         except OSError as error:
             print(error)  
 
+# Search all the trials for the subjects
 def get_trials(subject):
     if not search_subject(subject):
         exit()
@@ -50,6 +51,14 @@ def get_trials(subject):
         trials = [x for x in os.listdir(os.path.join(brisk.out_dir, subject))
                 if os.path.isdir(os.path.join(brisk.out_dir, subject, x))]
         return trials
+
+# Search all the subjects
+def get_subjects():
+    subjects = [
+        x for x in os.listdir(brisk.out_dir)
+        if not x.startswith('_')
+    ]
+    return subjects
 
 # Search if a subject exists
 def search_subject(subject):
