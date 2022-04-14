@@ -57,3 +57,4 @@ test*
 # brisk/test_local/
 brisk/config/directories.json
 notebooks-test/
+notebooks/*.pdf

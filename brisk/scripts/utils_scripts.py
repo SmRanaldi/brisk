@@ -42,7 +42,7 @@ def print_subjects():
     print(f'\t{brisk.out_dir}\n')
     print('Trials found:')
     for s in subjects:
-        print(f'\t{s}')
+        print(f'\t{s.title()}')
         for cond in path.get_trials(s):
-            print(f'\t  {cond}')
+            print(f'\t  {cond.replace("_"," ").title()}')
     print('')
