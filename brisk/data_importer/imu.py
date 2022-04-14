@@ -1,3 +1,4 @@
+from email.mime import base
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -67,8 +68,15 @@ def import_imu_data():
     else:
         files = path.get_imu_filename(base_dir)
         sname = base_dir.split(os.sep)[-1]
-        with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
-            imus = json.load(f)
+
+        if os.path.exists(os.path.join(base_dir,'imu_config.json')):
+            print('\nUsing custom IMU configuration...\n')
+            with open(os.path.join(base_dir,'imu_config.json'), 'r') as f:
+                imus = json.load(f)
+        else:
+            print('\nUsing standard IMU configuration...\n')
+            with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
+                imus = json.load(f)
 
         s_dir = os.path.join(out_dir, sname)
         arch_s_dir = os.path.join(out_dir, '_archive', sname)
