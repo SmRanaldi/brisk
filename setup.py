@@ -24,6 +24,7 @@ setup(
             'show_imu_config=brisk.scripts.utils_scripts:show_imu_config',
             'set_brisk_outdir=brisk.scripts.utils_scripts:set_out_dir',
             'brisk_subjects=brisk.scripts.utils_scripts:print_subjects',
+            'run_brisk_subject=brisk.scripts.analysis_scripts:run_subject',
         ]
     },
     package_data = {
