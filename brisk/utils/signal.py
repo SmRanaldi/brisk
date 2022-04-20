@@ -2,6 +2,7 @@ import numpy as np
 
 # ----- Functions -----
 
+# Custom autocorrelation
 def norm_autocorrelation(a):
 
     a = a.squeeze()
@@ -15,7 +16,7 @@ def norm_autocorrelation(a):
 
     return np.asarray(corr_temp)
 
-
+# Custom template matching
 def norm_templatematching(a,template):
 
     a = a.squeeze()
