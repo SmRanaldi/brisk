@@ -48,10 +48,14 @@ def _get_cycle_param(signal_in):
 # Get regularity
 def _regularity(signal_in):
 
-    acorr = trim_norm_autocorrelation(signal_in, 4*fs)
-    pk = find_peaks(acorr, distance=2*fs)
+    acorr = trim_norm_autocorrelation(signal_in, 20*fs)
+    pk = find_peaks(acorr, height=0.1, distance=2*fs)
+    if len(pk[0]):
+        out = acorr[pk[0][0]]
+    else:
+        out = 0
 
-    return acorr[pk[0][0]]
+    return out
 
 # ----- Functions -----
 

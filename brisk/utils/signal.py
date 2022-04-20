@@ -19,14 +19,14 @@ def norm_autocorrelation(a):
 # Custom trimmed autocorrelation
 def trim_norm_autocorrelation(a, n_samples):
 
-    half_n = int(np.round(n_samples/2))
+    n = int(np.round(n_samples))
 
     a = a.squeeze()
 
     corr_temp = [np.corrcoef(a[:-t], a[t:])[0,1] 
         for t in range(
-                1 + int(np.round(a.shape[0]/2)) - half_n, 
-                1 + int(np.round(a.shape[0]/2)) + half_n, 
+                1,
+                n
             )
         ]
 
