@@ -119,13 +119,13 @@ def _calculate_regularity(subject):
 
     trials = get_trials(subject)
 
+    out = []
     for t in trials:
         print(f'Updating trial {t.replace("_"," ").title()}...')
         data = segmentation.get_filtered_data(subject, t)
         acc_col = [x for x in data.columns if 'acc' in x]
         gyr_col = [x for x in data.columns if 'gyr' in x]
         segments = np.unique([x.split('_')[0] for x in acc_col])
-        out = []
 
         for c, cg in zip(acc_col, gyr_col):
             segment_body, _, dimension = c.split("_")
