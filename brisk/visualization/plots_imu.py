@@ -79,7 +79,7 @@ def plot_parameters(param, segment, sensor):
         'showfliers':False
     }
     dimensions = np.unique(param['dimension'])
-    parameter_name = np.unique([x.split('_')[0] for x in param.columns if '_' in x])
+    parameter_name = np.unique([x.split('_')[0] for x in param.columns if any(y in x for y in ['_acc', '_gyr'])])
     trials_labels = [x.replace('_',' ').title() for x in np.unique(param['trial'])]
     directions_labels = ['Total', 'VT', 'AP', 'ML']
 
