@@ -9,6 +9,7 @@ from brisk.analysis import segmentation
 from brisk.utils.stats import remove_outliers
 from brisk.utils.signal import trim_norm_autocorrelation
 from brisk.utils.path import get_trials
+from brisk import out_dir
 
 # ----- Parameters -----
 fs = 102.4
@@ -57,35 +58,15 @@ def _regularity(signal_in):
 
     return out
 
-# ----- Functions -----
-
-# Get all the time parameters from all the trials
-def get_time_parameters(subject):
-    
-    frequencies = segmentation.get_frequencies(subject)
-
-    frequencies = {k: remove_outliers(v,5) for k,v in frequencies.items()}
-
-    time_param = {k: 
-        {
-            'avg_frequency': np.median(v),
-            'all_frequency': v,
-            'avg_duration': np.median(60/v),
-            'std_duration': iqr(60/v)
-        }
-        for k, v in frequencies.items()}
-
-    return time_param
-
-# Get all parameters for each cycle
-def cycle_parameters(subject):
+# Calculate or save parameters
+def _calculate_parameters(subject):
 
     trials = get_trials(subject)
-
+    
     out = []
 
     for t in trials:
-
+        print(f'Updating trial {t.replace("_"," ").title()}...')
         events = segmentation.load_indexes(subject, t)
         data_in = segmentation.get_filtered_data(subject, t)
 
@@ -122,29 +103,30 @@ def cycle_parameters(subject):
                     *parameters_acc,
                     *parameters_gyr
                 ])
-        column_names = ['trial', 'event', 'segment', 'dimension',
-            *[x+'_acc' for x in labels],
-            *[x+'_gyr' for x in labels]
-        ]
 
-    return pd.DataFrame(out, columns=column_names)
+    column_names = ['trial', 'event', 'segment', 'dimension',
+        *[x+'_acc' for x in labels],
+        *[x+'_gyr' for x in labels]
+    ]
 
-# Get global and cycle parameters
-def global_parameters(subject):
-    param = cycle_parameters(subject)
-    param_mean = param.groupby(['trial', 'segment','dimension']).mean()
-    n_events = param.groupby(['trial', 'segment','dimension']).max()['event']+1
-    param_mean['n_events'] = n_events
-    param_mean.drop(columns=['event'], inplace=True)
-    param_mean.reset_index(inplace=True)
-    
+    out = pd.DataFrame(out, columns=column_names)
+    fn = os.path.join(out_dir,subject,'cycle_parameters.csv')
+    out.to_csv(fn, index=None)
+    return out
+
+# Calculate regularity
+def _calculate_regularity(subject):
+
     trials = get_trials(subject)
-    out = []
+
     for t in trials:
+        print(f'Updating trial {t.replace("_"," ").title()}...')
         data = segmentation.get_filtered_data(subject, t)
         acc_col = [x for x in data.columns if 'acc' in x]
         gyr_col = [x for x in data.columns if 'gyr' in x]
         segments = np.unique([x.split('_')[0] for x in acc_col])
+        out = []
+
         for c, cg in zip(acc_col, gyr_col):
             segment_body, _, dimension = c.split("_")
             reg_acc = _regularity(data[c].values)
@@ -172,5 +154,67 @@ def global_parameters(subject):
             ])
     column_names = ['trial', 'segment', 'dimension','reg_acc','reg_gyr']
     out_reg = pd.DataFrame(out, columns=column_names)
+    return out_reg
+
+# ----- Functions -----
+
+# Get all the time parameters from all the trials
+def get_time_parameters(subject):
+    
+    frequencies = segmentation.get_frequencies(subject)
+
+    frequencies = {k: remove_outliers(v,5) for k,v in frequencies.items()}
+
+    time_param = {k: 
+        {
+            'avg_frequency': np.median(v),
+            'all_frequency': v,
+            'avg_duration': np.median(60/v),
+            'std_duration': iqr(60/v)
+        }
+        for k, v in frequencies.items()}
+
+    return time_param
+
+# Get all parameters for each cycle
+def cycle_parameters(subject, update=False):
+
+    trials = get_trials(subject)
+
+    out = []
+
+    fn = os.path.join(out_dir,subject,'cycle_parameters.csv')
+    if not os.path.exists(fn):
+        print('Cycle parameters not found.')
+        update = True
+    if update:
+        out = _calculate_parameters(subject)
+    else:
+        print('Loading saved cycle parameters...')
+        out = pd.read_csv(fn)
+    return out
+
+# Get global and cycle parameters
+def global_parameters(subject, update=False):
+    fn = os.path.join(out_dir, subject, 'global_parameters.csv')
+    if not os.path.exists(fn):
+        print('Global parameters not found.')
+        update = True
+
+    if update:
+        param = cycle_parameters(subject)
+
+        param_mean = param.groupby(['trial', 'segment','dimension']).mean()
+        n_events = param.groupby(['trial', 'segment','dimension']).max()['event']+1
+        param_mean['n_events'] = n_events
+        param_mean.drop(columns=['event'], inplace=True)
+        param_mean.reset_index(inplace=True)
         
-    return param_mean.merge(right=out_reg, how='inner', on=['trial','segment','dimension'])
+        out_reg = _calculate_regularity(subject)
+        out = param_mean.merge(right=out_reg, how='inner', on=['trial','segment','dimension'])
+        out.to_csv(fn)
+    else: 
+        print('Loading saved global parameters...')
+        out = pd.read_csv(fn)
+        
+    return out
