@@ -1,6 +1,6 @@
-from cProfile import label
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from brisk.utils import path
 from brisk.analysis import segmentation
@@ -61,3 +61,49 @@ def plot_all_trials(subject, segment):
         a.grid('on')
         a.set_facecolor(fc)
     fig.show()
+
+# Plot parameters for a subject
+def plot_parameters(param, segment, sensor):
+
+    plot_options = {
+        'notch':True, 
+        'boxprops':{
+            'linewidth': 2, 
+            'edgecolor': [0,0.2,0.7], 
+            'facecolor': 'w'
+        }, 
+        'medianprops':{
+            'linewidth': 4, 
+            'color': 'g'
+        }, 
+        'showfliers':False
+    }
+    dimensions = np.unique(param['dimension'])
+    parameter_name = np.unique([x.split('_')[0] for x in param.columns if '_' in x])
+    trials_labels = [x.replace('_',' ').title() for x in np.unique(param['trial'])]
+    directions_labels = ['Total', 'VT', 'AP', 'ML']
+
+    fig, ax = plt.subplots(len(parameter_name), len(dimensions), figsize=(16,11), facecolor='w', sharex=True, sharey='row')
+
+    for i,p in enumerate(parameter_name):
+        for j,d in enumerate(dimensions):
+            sns.boxplot(
+                data=param[(param['segment'] == segment) & (param['dimension'] == d)],
+                x = 'trial',
+                y = p+'_'+sensor,
+                ax = ax[i,j],
+                **plot_options
+            )
+            ax[i,j].grid('on')
+            ax[i,j].set_xticklabels(trials_labels, rotation=45, fontsize=14)
+            ax[i,j].tick_params(axis='y', labelsize=14)
+            ax[i,j].set_facecolor([0.9,0.9,0.9])
+            ax[i,j].set_xlabel('')
+            ax[i,j].set_ylabel(p.replace('_',' ').title(), fontsize=14)
+
+    for a in ax[:,1:].flatten():
+        a.set_ylabel('')
+    for i, d in enumerate(dimensions):
+        ax[0,i].set_title(directions_labels[i], fontsize=16)
+    fig.align_ylabels(ax)
+    plt.show()
