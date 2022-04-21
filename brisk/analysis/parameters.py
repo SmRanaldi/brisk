@@ -152,7 +152,7 @@ def _calculate_regularity(subject):
                 reg_acc,
                 reg_gyr
             ])
-    column_names = ['trial', 'segment', 'dimension','reg_acc','reg_gyr']
+    column_names = ['trial', 'segment', 'dimension','regularity_acc','regularity_gyr']
     out_reg = pd.DataFrame(out, columns=column_names)
     return out_reg
 
@@ -212,7 +212,7 @@ def global_parameters(subject, update=False):
         
         out_reg = _calculate_regularity(subject)
         out = param_mean.merge(right=out_reg, how='inner', on=['trial','segment','dimension'])
-        out.to_csv(fn)
+        out.to_csv(fn, index=None)
     else: 
         print('Loading saved global parameters...')
         out = pd.read_csv(fn)
