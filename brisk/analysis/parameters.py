@@ -59,9 +59,7 @@ def _regularity(signal_in):
     return out
 
 # Calculate or save parameters
-def _calculate_parameters(subject):
-
-    trials = get_trials(subject)
+def _calculate_parameters(subject, trials):
     
     out = []
 
@@ -115,9 +113,7 @@ def _calculate_parameters(subject):
     return out
 
 # Calculate regularity
-def _calculate_regularity(subject):
-
-    trials = get_trials(subject)
+def _calculate_regularity(subject, trials):
 
     out = []
     for t in trials:
@@ -188,7 +184,7 @@ def cycle_parameters(subject, update=False):
         print('Cycle parameters not found.')
         update = True
     if update:
-        out = _calculate_parameters(subject)
+        out = _calculate_parameters(subject, trials)
     else:
         print('Loading saved cycle parameters...')
         out = pd.read_csv(fn)
@@ -196,6 +192,7 @@ def cycle_parameters(subject, update=False):
 
 # Get global and cycle parameters
 def global_parameters(subject, update=False):
+    trials = get_trials(subject)
     fn = os.path.join(out_dir, subject, 'global_parameters.csv')
     if not os.path.exists(fn):
         print('Global parameters not found.')
@@ -210,7 +207,7 @@ def global_parameters(subject, update=False):
         param_mean.drop(columns=['event'], inplace=True)
         param_mean.reset_index(inplace=True)
         
-        out_reg = _calculate_regularity(subject)
+        out_reg = _calculate_regularity(subject, trials)
         out = param_mean.merge(right=out_reg, how='inner', on=['trial','segment','dimension'])
         out.to_csv(fn, index=None)
     else: 

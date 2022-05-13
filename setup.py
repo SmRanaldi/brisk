@@ -15,6 +15,7 @@ setup(
         'six==1.16.0',
         'wincertstore==0.2',
         'matplotlib',
+        'numba',
     ],
     entry_points = {
         'console_scripts': [

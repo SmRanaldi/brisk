@@ -1,8 +1,10 @@
 import numpy as np
+from numba import jit
 
 # ----- Functions -----
 
 # Custom autocorrelation
+@jit(nopython=True)
 def norm_autocorrelation(a):
 
     a = a.squeeze()
@@ -17,6 +19,7 @@ def norm_autocorrelation(a):
     return np.asarray(corr_temp)
 
 # Custom trimmed autocorrelation
+@jit(nopython=True)
 def trim_norm_autocorrelation(a, n_samples):
 
     n = int(np.round(n_samples))
@@ -33,6 +36,7 @@ def trim_norm_autocorrelation(a, n_samples):
     return np.asarray(corr_temp)
 
 # Custom template matching
+@jit(nopython=True)
 def norm_templatematching(a,template):
 
     a = a.squeeze()
