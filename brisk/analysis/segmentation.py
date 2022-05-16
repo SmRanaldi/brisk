@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 import os
 
 from brisk.data_loader import trials
+from brisk.utils.cl import print_ongoing
 from brisk.utils.signal import norm_autocorrelation, norm_templatematching
 from brisk.utils import path
 from brisk import out_dir
@@ -66,7 +67,7 @@ def _filter_data(subject, trial):
 def _calculate_average(subject, trial):
     data_file = os.path.join(out_dir, subject, trial, 'filtered_imu.csv')
     if not os.path.exists(data_file):
-        print('\nSegmentation not found, calculating...\n')
+        print_ongoing('\nSegmentation not found, calculating...\n')
         _filter_data(subject, trial)
     movements = []
     indexes = load_indexes(subject, trial)
@@ -86,7 +87,7 @@ def update_indexes(subject, trial):
 
     trial_dir = os.path.join(out_dir,subject,trial)
     if not os.path.exists(trial_dir):
-        print('Subject or trial not found')
+        print_error('Subject or trial not found')
         return
     
     indexes, data, template = _get_segmentation_indexes(subject,trial)
@@ -104,7 +105,7 @@ def load_indexes(subject, trial):
     data_file = os.path.join(out_dir,subject,trial,'segmented_imu.csv')
 
     if not os.path.exists(index_file):
-        print('\nSegmentation not found, calculating...\n')
+        print_ongoing('\nSegmentation not found, calculating...\n')
         update_indexes(subject, trial)
     
     indexes = pd.read_csv(index_file)
@@ -115,16 +116,16 @@ def load_indexes(subject, trial):
 def get_filtered_data(subject, trial):
     data_file = os.path.join(out_dir, subject, trial, 'filtered_imu.csv')
     if not os.path.exists(data_file):
-        print('\nNo filtered data found, calculating...\n')
+        print_ongoing('\nNo filtered data found, calculating...\n')
         _filter_data(subject, trial)
 
     return pd.read_csv(data_file)
 
 # Get average profiles
-def get_average_profiles(subject, trial):
+def get_average_profiles(subject, trial, update=False):
     data_file = os.path.join(out_dir, subject, trial, 'average_imu.csv')
-    if not os.path.exists(data_file):
-        print('\nNo filtered data found, calculating...\n')
+    if (not os.path.exists(data_file)) or (update):
+        print_ongoing('\nNo filtered data found, calculating...\n')
         _calculate_average(subject, trial)
 
     return pd.read_csv(data_file)
@@ -133,7 +134,7 @@ def get_average_profiles(subject, trial):
 def get_template(subject, trial):
     data_file = os.path.join(out_dir, subject, trial, 'template_imu.csv')
     if not os.path.exists(data_file):
-        print('\nNo template found, calculating...\n')
+        print_ongoing('\nNo template found, calculating...\n')
         update_indexes(subject, trial)
     return pd.read_csv(data_file).values.squeeze()
 

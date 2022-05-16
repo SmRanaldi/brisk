@@ -1,8 +1,10 @@
 from tkinter import Tk, filedialog
+from termcolor import colored
 
 import os
 
 import brisk
+from brisk.utils.cl import *
 
 # -----
 
@@ -63,7 +65,7 @@ def get_subjects():
 # Search if a subject exists
 def search_subject(subject):
     if not os.path.exists(os.path.join(brisk.out_dir, subject)):
-        print(f'Subject {subject} not found in the database.')
+        print_error(f'Subject {subject} not found in the database.')
         return False
     else:
         return True
@@ -71,7 +73,7 @@ def search_subject(subject):
 # Search if a trial exists
 def search_trial(subject, trial):
     if not os.path.exists(os.path.join(brisk.out_dir, subject, trial)):
-        print(f'Trial {trial} of subject {subject} not found in the database.')
+        print_error(f'Trial {trial} of subject {subject} not found in the database.')
         return False
     else:
         return True

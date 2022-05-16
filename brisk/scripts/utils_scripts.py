@@ -1,9 +1,9 @@
+import argparse
+from termcolor import colored
+
 import os
 import sys
 import json
-
-import argparse
-from termcolor import colored
 
 import brisk
 from brisk.utils import settings, path
