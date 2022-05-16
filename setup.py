@@ -8,7 +8,7 @@ setup(
     install_requires = [
         'certifi==2021.10.8',
         'notebook==6.4.8',
-        'numpy==1.22.3',
+        'numpy==1.20',
         'pandas==1.4.1',
         'python-dateutil==2.8.2',
         'pytz==2021.3',
@@ -21,10 +21,7 @@ setup(
         'console_scripts': [
             'hello_brisk=brisk.scripts.utils_scripts:hello',
             'brisk_load_imu=brisk.scripts.import:import_imu',
-            'show_brisk_folders=brisk.scripts.utils_scripts:show_folders',
-            'show_imu_config=brisk.scripts.utils_scripts:show_imu_config',
             'set_brisk_outdir=brisk.scripts.utils_scripts:set_out_dir',
-            'brisk_subjects=brisk.scripts.utils_scripts:print_subjects',
             'run_brisk_subject=brisk.scripts.analysis_scripts:run_subject',
         ]
     },

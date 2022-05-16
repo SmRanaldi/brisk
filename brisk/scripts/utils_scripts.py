@@ -3,19 +3,26 @@ import sys
 import json
 
 import argparse
+from termcolor import colored
 
 import brisk
 from brisk.utils import settings, path
 
 # General hello function
 def hello():
-    parser = argparse.ArgumentParser(description='Just an hello script')
-    parser.add_argument('name')
-    parser.parse_args()
-    # if len(sys.argv)>1:
-    #     print(f'Hello, {parser.name.capitalize()}!')
-    # else:
-    #     print('Hello, BRISK user!')
+    parser = argparse.ArgumentParser(description='Just an hello script, useful for visualizing folders and subjects')
+    parser.add_argument('-n', '--name', default='BRISK user', help='Name of the user (Not needed in this version)')
+    parser.add_argument('-s', '--subjects', help='Show subjects list', action='store_true')
+    parser.add_argument('-f', '--folders', help='Show folders', action='store_true')
+    parser.add_argument('-c', '--show-config', help='Show IMU config', action='store_true')
+    args = parser.parse_args()
+    print(f'Hello, {args.name.capitalize()}!')
+    if args.subjects:
+        print_subjects()
+    if args.folders:
+        show_folders()
+    if args.show_config:
+        show_imu_config()
     return
 
 # Show the working folders
@@ -28,6 +35,7 @@ def show_folders():
 def show_imu_config():
     with open(os.path.join(brisk.config_dir, 'imu_std.json'), 'r') as f:
         imus = json.load(f)
+    print()
     print(json.dumps(imus, indent=4))
 
 # Set output directory
