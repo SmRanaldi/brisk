@@ -2,15 +2,20 @@ import os
 import sys
 import json
 
+import argparse
+
 import brisk
 from brisk.utils import settings, path
 
 # General hello function
 def hello():
-    if len(sys.argv)>1:
-        print(f'Hello, {sys.argv[1].capitalize()}!')
-    else:
-        print('Hello, BRISK user!')
+    parser = argparse.ArgumentParser(description='Just an hello script')
+    parser.add_argument('name')
+    parser.parse_args()
+    # if len(sys.argv)>1:
+    #     print(f'Hello, {parser.name.capitalize()}!')
+    # else:
+    #     print('Hello, BRISK user!')
     return
 
 # Show the working folders
