@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import os
 
 from brisk.data_loader import trials
-from brisk.utils.cl import print_ongoing
+from brisk.utils.cl import *
 from brisk.utils.signal import norm_autocorrelation, norm_templatematching
 from brisk.utils import path
 from brisk import out_dir
@@ -64,9 +64,9 @@ def _filter_data(subject, trial):
     data_out.to_csv(os.path.join(out_dir, subject, trial, 'filtered_imu.csv'), index=None)
 
 # Calculate average profiles
-def _calculate_average(subject, trial):
+def _calculate_average(subject, trial, update=False):
     data_file = os.path.join(out_dir, subject, trial, 'filtered_imu.csv')
-    if not os.path.exists(data_file):
+    if (not os.path.exists(data_file)) or (update):
         print_ongoing('\nSegmentation not found, calculating...\n')
         _filter_data(subject, trial)
     movements = []
@@ -126,7 +126,7 @@ def get_average_profiles(subject, trial, update=False):
     data_file = os.path.join(out_dir, subject, trial, 'average_imu.csv')
     if (not os.path.exists(data_file)) or (update):
         print_ongoing('\nNo filtered data found, calculating...\n')
-        _calculate_average(subject, trial)
+        _calculate_average(subject, trial, update)
 
     return pd.read_csv(data_file)
 
