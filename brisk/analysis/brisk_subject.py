@@ -6,7 +6,7 @@ import json
 from brisk import config_dir, out_dir
 from brisk.analysis import segmentation
 from brisk.utils.cl import print_error, print_warning
-from brisk.data_importer.imu import load_raw_data
+from brisk.data_importer.imu import get_imu_config, load_raw_data
 from brisk.utils import path
 
 # Class for the brisk subject
@@ -31,8 +31,8 @@ class BriskSubject():
         self.weight = None
         self.height = None
 
-        with open(path.join_path([config_dir,'imu_std.json']), 'r') as f:
-            self.imu_config = json.load(f)
+        self.imu_config = get_imu_config(self.archive_path)
+
         self.fs = 102.4
         self.samples_per_cycle = 200
 
