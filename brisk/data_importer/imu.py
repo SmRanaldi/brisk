@@ -8,6 +8,7 @@ import shutil
 
 from brisk import config_dir, out_dir
 from brisk.utils import path
+from brisk.utils.cl import print_error
 
 # ----- Auxiliary functions -----
 
@@ -58,13 +59,16 @@ def _ask_events(data_in):
 
 # Import data and save to the directory
 # in the config files
-def import_imu_data():
+def import_imu_data(db_path=None):
 
-    print('Select data folder:')
+    if not db_path:
 
-    base_dir = path.get_folder()
+        print('Select data folder:')
+
+        base_dir = path.get_folder()
+
     if not base_dir:
-        print('No directory selected, aborting.')
+        print_error('No directory selected, aborting.')
     else:
         files = path.get_imu_filename(base_dir)
         sname = base_dir.split(os.sep)[-1]
@@ -95,6 +99,43 @@ def import_imu_data():
                 path.make_directory(rawdata_dir)
                 _save_imu_data(os.path.join(base_dir,file), imus, os.path.join(rawdata_dir,'imu.csv'))
         else:
-            print('Different number of conditions and data files, aborting.')
+            print_error('Different number of conditions and data files, aborting.')
 
     return
+
+# Load raw data
+def load_raw_data(base_dir = None):
+
+    if not base_dir:
+
+        print('Select data folder:')
+
+        base_dir = path.get_folder()
+
+    if not base_dir:
+        print('No directory selected, aborting.')
+    else:
+        files = path.get_imu_filename(base_dir)
+        sname = base_dir.split(os.sep)[-1]
+
+        if os.path.exists(os.path.join(base_dir,'imu_config.json')):
+            print('\nUsing custom IMU configuration...\n')
+            with open(os.path.join(base_dir,'imu_config.json'), 'r') as f:
+                imus = json.load(f)
+        else:
+            print('\nUsing standard IMU configuration...\n')
+            with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
+                imus = json.load(f)
+
+        s_dir = os.path.join(out_dir, sname)
+
+        conditions = _parse_conditions(base_dir)
+
+        out_dict = {}
+        for c,file in zip(conditions, files):
+            data = pd.read_csv(os.path.join(base_dir,file))
+            for (k,v) in imus.items():
+                data.columns = [x.replace(v,k) for x in data.columns]
+            out_dict[c] = data.iloc[:,:-1]
+
+        return out_dict
