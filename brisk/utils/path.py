@@ -2,6 +2,7 @@ from tkinter import Tk, filedialog
 from termcolor import colored
 
 import os
+import json
 
 import brisk
 from brisk.utils.cl import *
@@ -77,3 +78,13 @@ def search_trial(subject, trial):
         return False
     else:
         return True
+
+# Get anthropometric parameters
+def get_anthropometrics(subject):
+    file_path = join_path([brisk.out_dir, subject, 'anthropometrics.json'])
+    if not os.path.exists(file_path):
+        return (None, None, None)
+    else:
+        with open(file_path) as f:
+            out = json.load(f)
+            return (out['age'], out['weight'], out['height'])

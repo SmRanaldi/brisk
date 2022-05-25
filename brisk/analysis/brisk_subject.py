@@ -5,7 +5,7 @@ import json
 
 from brisk import config_dir, out_dir
 from brisk.analysis import segmentation
-from brisk.utils.cl import print_error
+from brisk.utils.cl import print_error, print_warning
 from brisk.data_importer.imu import load_raw_data
 from brisk.utils import path
 
@@ -27,6 +27,10 @@ class BriskSubject():
         self.segmented_data = {}
         self.cycle_indexes = {}
         self.parameters = []
+        self.age = None
+        self.weight = None
+        self.height = None
+
         with open(path.join_path([config_dir,'imu_std.json']), 'r') as f:
             self.imu_config = json.load(f)
         self.fs = 102.4
@@ -66,6 +70,9 @@ class BriskSubject():
             for t in self.trials
             if path.search_trial(self.name, t)
         }
+        self.age, self.weight, self.height = path.get_anthropometrics(self.name)
+        if any([x==None for x in [self.age, self.weight, self.age]]):
+            print_warning('Anthropometrics not found.')
 
 
     # --- Get average profiles

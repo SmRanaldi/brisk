@@ -11,3 +11,7 @@ def print_ongoing(str_in):
 # Print success message
 def print_success(str_in):
     print(colored(str_in, 'green'))
+
+# Print success message
+def print_warning(str_in):
+    print(colored(str_in, 'yellow'))

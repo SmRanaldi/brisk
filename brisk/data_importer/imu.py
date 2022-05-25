@@ -49,13 +49,28 @@ def _ask_events(data_in):
     plt.figure()
     plt.plot(sig)
     plt.title('Select start and stop points')
-    (x0,y0), (x1,y1) = plt.ginput(2)
+    (x0,_), (x1,_) = plt.ginput(2)
     plt.close()
     points = sorted([int(x0), int(x1)])
     return points
 
 
 # ----- Main functions -----
+
+# Get IMU config
+def get_imu_config(base_dir):
+
+    if os.path.exists(path.join_path([base_dir,'imu_config.json'])):
+        print('\nUsing custom IMU configuration...\n')
+        with open(path.join_path([base_dir,'imu_config.json']), 'r') as f:
+            imus = json.load(f)
+    else:
+        print('\nUsing standard IMU configuration...\n')
+        with open(path.join_path([config_dir,'imu_std.json']), 'r') as f:
+            imus = json.load(f)
+
+    return imus
+
 
 # Import data and save to the directory
 # in the config files
@@ -73,14 +88,7 @@ def import_imu_data(db_path=None):
         files = path.get_imu_filename(base_dir)
         sname = base_dir.split(os.sep)[-1]
 
-        if os.path.exists(os.path.join(base_dir,'imu_config.json')):
-            print('\nUsing custom IMU configuration...\n')
-            with open(os.path.join(base_dir,'imu_config.json'), 'r') as f:
-                imus = json.load(f)
-        else:
-            print('\nUsing standard IMU configuration...\n')
-            with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
-                imus = json.load(f)
+        imus = get_imu_config(base_dir)
 
         s_dir = os.path.join(out_dir, sname)
         arch_s_dir = os.path.join(out_dir, '_archive', sname)
@@ -113,21 +121,15 @@ def load_raw_data(base_dir = None):
         base_dir = path.get_folder()
 
     if not base_dir:
-        print('No directory selected, aborting.')
+        print_error('No directory selected, aborting.')
     else:
+        if not os.path.exists(base_dir):
+            print_error('Subject not in archive')
+            return
         files = path.get_imu_filename(base_dir)
         sname = base_dir.split(os.sep)[-1]
 
-        if os.path.exists(os.path.join(base_dir,'imu_config.json')):
-            print('\nUsing custom IMU configuration...\n')
-            with open(os.path.join(base_dir,'imu_config.json'), 'r') as f:
-                imus = json.load(f)
-        else:
-            print('\nUsing standard IMU configuration...\n')
-            with open(os.path.join(config_dir,'imu_std.json'), 'r') as f:
-                imus = json.load(f)
-
-        s_dir = os.path.join(out_dir, sname)
+        imus = get_imu_config(base_dir)
 
         conditions = _parse_conditions(base_dir)
 
