@@ -82,14 +82,15 @@ def _calculate_average(subject, trial, update=False):
 # ----- Functions -----
 
 # Update and save the indexes
-def update_indexes(subject, trial):
+def update_indexes(subject, trial, indexes=None):
 
     trial_dir = os.path.join(out_dir,subject,trial)
     if not os.path.exists(trial_dir):
         print_error('Subject or trial not found')
         return
     
-    indexes, data, template = _get_segmentation_indexes(subject,trial)
+    if indexes == None:
+        indexes, data, template = _get_segmentation_indexes(subject,trial)
 
     pd.DataFrame(indexes, columns=['indexes']).to_csv(
         os.path.join(trial_dir,'indexes_cycles.csv'),
