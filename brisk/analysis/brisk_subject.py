@@ -93,6 +93,13 @@ class BriskSubject():
     # --- Get cycle indexes from markers
     def get_marker_indexes(self):
         self.trials = path.get_trials(self.name)
+        ctrl = True
         for t in self.trials:
-            dd_evt = pd.read_csv(path.join_path([self.db_path, t, 'rawdata', 'events_marker.csv']))
-            self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
+            filename_evt = path.join_path([self.db_path, t, 'rawdata', 'events_marker.csv'])
+            if os.path.exists(filename_evt):
+                dd_evt = pd.read_csv(filename_evt)
+                self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
+            else:
+                ctrl = False
+        if not ctrl:
+            print_error('Marker events not found.')
