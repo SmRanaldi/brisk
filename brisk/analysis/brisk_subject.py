@@ -96,5 +96,5 @@ class BriskSubject():
     def get_marker_indexes(self):
         self.trials = path.get_trials(self.name)
         for t in self.trials:
-            dd_evt = pd.read_csv(path.join_path([self.db_path, t, 'events_marker.csv']))
+            dd_evt = pd.read_csv(path.join_path([self.db_path, t, 'rawdata', 'events_marker.csv']))
             self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
