@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 
-from brisk import config_dir, out_dir
+from brisk import config_dir, out_dir, fs_marker, fs_imu
 from brisk.analysis import segmentation
 from brisk.utils.cl import print_error, print_warning
 from brisk.data_importer.imu import get_imu_config, load_raw_data
@@ -26,6 +26,8 @@ class BriskSubject():
         self.raw_data = {}
         self.segmented_data = {}
         self.cycle_indexes = {}
+        self.cycle_events = {} # In seconds
+        self.cycle_events_marker = {} # In seconds
         self.parameters = []
         self.age = None
         self.weight = None
@@ -33,7 +35,6 @@ class BriskSubject():
 
         self.imu_config = get_imu_config(self.archive_path)
 
-        self.fs = 102.4
         self.samples_per_cycle = 200
 
 
@@ -70,6 +71,7 @@ class BriskSubject():
             for t in self.trials
             if path.search_trial(self.name, t)
         }
+        self.cycle_events = {t: v/fs_imu for t,v in self.cycle_indexes.items()}
         self.age, self.weight, self.height = path.get_anthropometrics(self.name)
         if any([x==None for x in [self.age, self.weight, self.age]]):
             print_warning('Anthropometrics not found.')
@@ -89,3 +91,10 @@ class BriskSubject():
         self.samples_per_cycle = out_profiles[self.trials[0]].shape[0]
 
         return out_profiles
+
+    # --- Get cycle indexes from markers
+    def get_marker_indexes(self):
+        self.trials = path.get_trials(self.name)
+        for t in self.trials:
+            dd_evt = pd.read_csv(path.join_path([self.db_path, t, 'events_marker.csv']))
+            self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
