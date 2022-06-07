@@ -25,7 +25,6 @@ class BriskSubject():
         self.trials = []
         self.raw_data = {}
         self.segmented_data = {}
-        self.cycle_indexes = {}
         self.cycle_events = {} # In seconds
         self.cycle_events_marker = {} # In seconds
         self.parameters = []
@@ -66,12 +65,11 @@ class BriskSubject():
             for t in self.trials
             if path.search_trial(self.name, t)
         }
-        self.cycle_indexes = {t:
-            segmentation.load_indexes(self.name, t)
+        self.cycle_events = {t:
+            segmentation.load_indexes(self.name, t)/fs_imu
             for t in self.trials
             if path.search_trial(self.name, t)
         }
-        self.cycle_events = {t: v/fs_imu for t,v in self.cycle_indexes.items()}
         self.age, self.weight, self.height = path.get_anthropometrics(self.name)
         if any([x==None for x in [self.age, self.weight, self.age]]):
             print_warning('Anthropometrics not found.')
