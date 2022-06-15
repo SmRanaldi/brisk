@@ -25,6 +25,7 @@ class BriskSubject():
         self.trials = []
         self.raw_data = {}
         self.segmented_data = {}
+        self.average_data = {}
         self.cycle_events = {} # In seconds
         self.cycle_events_marker = {} # In seconds
         self.parameters = []
@@ -77,16 +78,23 @@ class BriskSubject():
 
     # --- Get average profiles
     def get_average_profiles(self):
-        out_profiles = {t: 
-            segmentation.get_average_profiles(
-                subject=self.name,
-                trial=t,
-                update=False
-            )
-            for t in self.trials
-        }
+        if not self.average_data.keys():
+            out_profiles = {t: 
+                segmentation.get_average_profiles(
+                    subject=self.name,
+                    trial=t,
+                    update=False
+                )
+                for t in self.trials
+            }
 
-        self.samples_per_cycle = out_profiles[self.trials[0]].shape[0]
+            self.samples_per_cycle = out_profiles[self.trials[0]].shape[0]
+
+            self.average_data = out_profiles
+
+        else:
+
+            out_profiles = self.average_data
 
         return out_profiles
 
