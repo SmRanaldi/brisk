@@ -5,7 +5,8 @@ import json
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu
 from brisk.analysis import segmentation
-from brisk.utils.cl import print_error, print_warning
+from brisk import analysis
+from brisk.utils.cl import print_error, print_ongoing, print_warning
 from brisk.data_importer.imu import get_imu_config, load_raw_data
 from brisk.utils import path
 
@@ -36,7 +37,6 @@ class BriskSubject():
         self.imu_config = get_imu_config(self.archive_path)
 
         self.samples_per_cycle = 200
-
 
     # --- Conversion to string
     def __str__(self) -> str:
@@ -111,3 +111,32 @@ class BriskSubject():
                 ctrl = False
         if not ctrl:
             print_error('Marker events not found.')
+
+
+    # --- Dump absolute indexes to db/rawdata
+    def dump_indexes(self):
+        if not self.trials:
+            self.import_data()
+
+        for t in self.trials:
+            with open(path.join_path([self.db_path, t, 'rawdata', 'events.json'])) as f:
+                start_t = json.load(f)['events']['imu'][0]/fs_imu
+
+            evt = pd.DataFrame(self.cycle_events[t] + start_t, columns=['events'])
+            evt.to_csv(path.join_path([self.db_path, t, 'rawdata', 'events_absolute.csv']), index=None)
+
+    # --- Update all data in the db
+    def update(self):
+
+        if path.search_subject(self.name):
+            self.trials = path.get_trials(self.name)
+
+        for t in self.trials:
+            print_ongoing(f'\nUpdating subject {self.name}, trial {t}...')
+            segmentation.update_indexes(self.name, t)
+            segmentation._filter_data(self.name, t)
+            segmentation._calculate_average(self.name, t)
+        
+        print_ongoing(f'\nUpdating subject {self.name}, parameters...')
+        analysis.cycle_parameters(self.name, True)
+        analysis.global_parameters(self.name, True)

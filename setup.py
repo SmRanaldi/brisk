@@ -16,6 +16,7 @@ setup(
         'wincertstore==0.2',
         'matplotlib',
         'numba',
+        'dtaidistance',
     ],
     entry_points = {
         'console_scripts': [
