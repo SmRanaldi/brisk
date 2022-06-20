@@ -3,11 +3,11 @@ import pandas as pd
 import os
 import json
 
-from brisk import config_dir, out_dir, fs_marker, fs_imu
+from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
 from brisk.analysis import segmentation
 from brisk import analysis
 from brisk.utils.cl import print_error, print_ongoing, print_warning
-from brisk.data_importer.imu import get_imu_config, load_raw_data
+from brisk.data_importer.imu import get_imu_config, load_raw_imu
 from brisk.utils import path
 
 # Class for the brisk subject
@@ -24,17 +24,20 @@ class BriskSubject():
         self.archive_path = path.join_path([out_dir, '_archive', name])
         self.db_path = path.join_path([out_dir, name])
         self.trials = []
-        self.raw_data = {}
+        self.raw_imu = {}
+        self.raw_emg = {}
+        self.raw_forces = {}
+        self.raw_moments = {}
+        self.raw_cop = {}
         self.segmented_data = {}
         self.average_data = {}
         self.cycle_events = {} # In seconds
         self.cycle_events_marker = {} # In seconds
+        self.cycle_events_absolute = {} # In seconds
         self.parameters = []
         self.age = None
         self.weight = None
         self.height = None
-
-        self.imu_config = get_imu_config(self.archive_path)
 
         self.samples_per_cycle = 200
 
@@ -42,16 +45,134 @@ class BriskSubject():
     def __str__(self) -> str:
         return self.name.title()
     
+    # *********** Raw data functions *************
+
+    # --- Import trial names
+    def get_trials(self):
+        if not self.trials:
+            self.trials = path.get_trials(self.name)
+        return self.trials
     
-    # --- Import only data from the archive
-    def import_from_archive(self):
+    # --- Import IMU
+    def get_raw_imu(self):
         
         if not os.path.exists(self.db_path):
             print_error(f'Subject {self.name} not found in the archive.')
             return
+        if not self.raw_imu.keys():
+            self.raw_imu = load_raw_imu(base_dir=self.archive_path)
 
-        self.raw_data = load_raw_data(base_dir=self.archive_path)
+        return self.raw_imu
 
+    # --- Import EMG
+    def get_raw_emg(self):
+        
+        if not os.path.exists(self.db_path):
+            print_error(f'Subject {self.name} not found in the archive.')
+            return
+        if not self.raw_emg.keys():
+            self.raw_emg = {
+                t: pd.read_csv(path.join_path([
+                    self.db_path,
+                    t,
+                    'rawdata',
+                    'emg.csv'
+                ]))
+                for t in self.get_trials()
+            }
+
+        return self.raw_emg
+
+    # --- Import forces
+    def get_raw_forces(self):
+        
+        if not os.path.exists(self.db_path):
+            print_error(f'Subject {self.name} not found in the archive.')
+            return
+        if not self.raw_forces.keys():
+            self.raw_forces = {
+                t: pd.read_csv(path.join_path([
+                    self.db_path,
+                    t,
+                    'rawdata',
+                    'force.csv'
+                ]))
+                for t in self.get_trials()
+            }
+
+        return self.raw_forces
+
+    # --- Import moments
+    def get_raw_moments(self):
+        
+        if not os.path.exists(self.db_path):
+            print_error(f'Subject {self.name} not found in the archive.')
+            return
+        if not self.raw_moments.keys():
+            self.raw_moments = {
+                t: pd.read_csv(path.join_path([
+                    self.db_path,
+                    t,
+                    'rawdata',
+                    'moment.csv'
+                ]))
+                for t in self.get_trials()
+            }
+
+        return self.raw_moments
+
+    # --- Import cop
+    def get_raw_cop(self):
+        
+        if not os.path.exists(self.db_path):
+            print_error(f'Subject {self.name} not found in the archive.')
+            return
+        if not self.raw_cop.keys():
+            self.raw_cop = {
+                t: pd.read_csv(path.join_path([
+                    self.db_path,
+                    t,
+                    'rawdata',
+                    'cop.csv'
+                ]))
+                for t in self.get_trials()
+            }
+
+        return self.raw_cop
+
+    # --- Get absolute indexes
+    def get_absolute_indexes(self):
+        self.trials = path.get_trials(self.name)
+        ctrl = True
+        for t in self.trials:
+            filename_evt = path.join_path([self.db_path, t, 'rawdata', 'events_absolute.csv'])
+            if os.path.exists(filename_evt):
+                dd_evt = pd.read_csv(filename_evt)
+                self.cycle_events_absolute[t] = dd_evt.values[:,0]
+            else:
+                ctrl = False
+        if not ctrl:
+            print_error('Marker events not found.')
+
+        return self.cycle_events_absolute
+
+    # --- Get cycle indexes from markers
+    def get_marker_indexes(self):
+        self.trials = path.get_trials(self.name)
+        ctrl = True
+        for t in self.trials:
+            filename_evt = path.join_path([self.db_path, t, 'rawdata', 'events_marker.csv'])
+            if os.path.exists(filename_evt):
+                dd_evt = pd.read_csv(filename_evt)
+                self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
+            else:
+                ctrl = False
+        if not ctrl:
+            print_error('Marker events not found.')
+
+        return self.cycle_events_marker
+
+    # *********** Import functions *************
 
     # --- Import all available data
     def import_data(self):
@@ -98,20 +219,7 @@ class BriskSubject():
 
         return out_profiles
 
-    # --- Get cycle indexes from markers
-    def get_marker_indexes(self):
-        self.trials = path.get_trials(self.name)
-        ctrl = True
-        for t in self.trials:
-            filename_evt = path.join_path([self.db_path, t, 'rawdata', 'events_marker.csv'])
-            if os.path.exists(filename_evt):
-                dd_evt = pd.read_csv(filename_evt)
-                self.cycle_events_marker[t] = dd_evt.values[:,0]/fs_marker
-            else:
-                ctrl = False
-        if not ctrl:
-            print_error('Marker events not found.')
-
+    # *********** DB functions *************
 
     # --- Dump absolute indexes to db/rawdata
     def dump_indexes(self):

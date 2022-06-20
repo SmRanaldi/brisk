@@ -111,7 +111,7 @@ def import_imu_data(db_path=None):
     return
 
 # Load raw data
-def load_raw_data(base_dir = None):
+def load_raw_imu(base_dir = None):
 
     if not base_dir:
 
