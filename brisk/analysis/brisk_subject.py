@@ -276,24 +276,29 @@ class BriskSubject():
     def get_zones(self):
         self.phase_duration = {}
         self.phases = {}
-        for k, v in self.get_raw_imu():
-            pd_temp, p_temp = kinematics.phase_count(data_in=v, limits=self.segmentation_labels)
+        for k, v in self.get_raw_imu().items():
+            pd_temp, p_temp = kinematics.phase_count(data_in=v[self.segmentation_labels].values, limits=self.get_limits())
             self.phase_duration[k] = pd_temp
             self.phases[k] = p_temp
         return self.phases
     
     # --- Fit to phases
     def fit_to_phases(self, data_in):
+        if not self.phases.keys():
+            self.get_zones()
         data = {k: sgn.resample(v, self.phases[k].size) for k, v in data_in.items()}
         out = {k: kinematics.average_by_phase(v, self.phases[k]) for k, v in data.items()}
         return out
 
     # --- Plot fitted data
     def plot_to_phases(self, data_in):
+        if not self.phases.keys():
+            self.get_zones()
         matrices_in = self.fit_to_phases(data_in)
-        fig, ax = plt.subplots(int(len(data_in.keys())), 2, figsize=(16,16))
-        for i, v in enumerate(data_in.values()):
+        fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16))
+        for i, v in enumerate(matrices_in.values()):
             row = i%2
             col = int(i/2)
-            kinematics.plot_phases(self.fit_to_phases(v), ax=ax[row,col])
+            kinematics.plot_phases(v, ax=ax[row,col])
         plt.show(fig)
+        return matrices_in
