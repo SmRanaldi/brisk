@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import scipy.signal as sgn
 import matplotlib.pyplot as plt
 
@@ -44,7 +45,7 @@ class BriskSubject():
         self.height = None
 
         self.samples_per_cycle = 200
-        self.segmentation_labels = ['trunk_acc_z', 'trunk_acc_x']
+        self.segmentation_labels = ['trunk_acc_y', 'trunk_acc_z']
 
     # --- Conversion to string
     def __str__(self) -> str:
@@ -190,7 +191,7 @@ class BriskSubject():
     # --- Import all available data
     def import_data(self):
 
-        self.import_from_archive()
+        self.get_raw_imu()
 
         if path.search_subject(self.name):
             self.trials = path.get_trials(self.name)
@@ -267,7 +268,7 @@ class BriskSubject():
 
     # --- Get zones from trunk data
     def get_limits(self):
-        if not self.phases_limits:
+        if not np.asarray(self.phases_limits).size:
             self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
         return self.phases_limits
 
