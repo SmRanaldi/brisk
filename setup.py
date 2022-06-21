@@ -8,14 +8,13 @@ setup(
     install_requires = [
         'certifi==2021.10.8',
         'notebook==6.4.8',
-        'numpy==1.20',
+        'numpy==1.22.4',
         'pandas==1.4.1',
         'python-dateutil==2.8.2',
         'pytz==2021.3',
         'six==1.16.0',
         'wincertstore==0.2',
         'matplotlib',
-        'numba',
         'dtaidistance',
     ],
     entry_points = {

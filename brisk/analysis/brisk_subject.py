@@ -1,11 +1,12 @@
 import pandas as pd
+import scipy.signal as sgn
+import matplotlib.pyplot as plt
 
 import os
 import json
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
-from brisk.analysis import segmentation
-from brisk import analysis
+from brisk.analysis import segmentation, parameters, kinematics
 from brisk.utils.cl import print_error, print_ongoing, print_warning
 from brisk.data_importer.imu import get_imu_config, load_raw_imu
 from brisk.utils import path
@@ -29,6 +30,9 @@ class BriskSubject():
         self.raw_forces = {}
         self.raw_moments = {}
         self.raw_cop = {}
+        self.phases = {}
+        self.phases_limits = {}
+        self.phases_duration = {}
         self.segmented_data = {}
         self.average_data = {}
         self.cycle_events = {} # In seconds
@@ -40,6 +44,7 @@ class BriskSubject():
         self.height = None
 
         self.samples_per_cycle = 200
+        self.segmentation_labels = ['trunk_acc_z', 'trunk_acc_x']
 
     # --- Conversion to string
     def __str__(self) -> str:
@@ -60,7 +65,15 @@ class BriskSubject():
             print_error(f'Subject {self.name} not found in the archive.')
             return
         if not self.raw_imu.keys():
-            self.raw_imu = load_raw_imu(base_dir=self.archive_path)
+            self.raw_imu = {
+                t: pd.read_csv(path.join_path([
+                    self.db_path,
+                    t,
+                    'rawdata',
+                    'imu.csv'
+                ]))
+                for t in self.get_trials()
+            }
 
         return self.raw_imu
 
@@ -246,5 +259,40 @@ class BriskSubject():
             segmentation._calculate_average(self.name, t)
         
         print_ongoing(f'\nUpdating subject {self.name}, parameters...')
-        analysis.cycle_parameters(self.name, True)
-        analysis.global_parameters(self.name, True)
+        parameters.cycle_parameters(self.name, True)
+        parameters.global_parameters(self.name, True)
+
+
+    # *********** DB functions *************
+
+    # --- Get zones from trunk data
+    def get_limits(self):
+        if not self.phases_limits.keys():
+            self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
+        return self.phases_limits
+
+    # --- Get phase indexes and durations
+    def get_zones(self):
+        self.phase_duration = {}
+        self.phases = {}
+        for k, v in self.get_raw_imu():
+            pd_temp, p_temp = kinematics.phase_count(data_in=v, limits=self.segmentation_labels)
+            self.phase_duration[k] = pd_temp
+            self.phases[k] = p_temp
+        return self.phases
+    
+    # --- Fit to phases
+    def fit_to_phases(self, data_in):
+        data = {k: sgn.resample(v, self.phases[k].size) for k, v in data_in.items()}
+        out = {k: kinematics.average_by_phase(v, self.phases[k]) for k, v in data.items()}
+        return out
+
+    # --- Plot fitted data
+    def plot_to_phases(self, data_in):
+        matrices_in = self.fit_to_phases(data_in)
+        fig, ax = plt.subplots(int(len(data_in.keys())), 2, figsize=(16,16))
+        for i, v in enumerate(data_in.values()):
+            row = i%2
+            col = int(i/2)
+            kinematics.plot_phases(self.fit_to_phases(v), ax=ax[row,col])
+        plt.show(fig)
