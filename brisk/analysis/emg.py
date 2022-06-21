@@ -5,7 +5,7 @@ from brisk import fs_emg
 
 # --- Filtering EMG
 def filter_EMG(signal_in):
-    b, a = sgn.butter(3, np.array([25, 450])/fs_emg, btype='bandpass')
+    b, a = sgn.butter(4, np.array([25, 350])/fs_emg, btype='bandpass')
     signal_out = sgn.filtfilt(b, a, signal_in, axis=0)
     b, a = sgn.butter(3, np.array([49.5, 50.5])/fs_emg, btype='bandstop')
     signal_out = sgn.filtfilt(b, a, signal_out, axis=0)
@@ -19,11 +19,10 @@ def envelope_EMG(signal_in):
     return env
 
 # --- Coactivation
-def coactivation_EMG(signal_in):
+def coactivation_EMG(signal_in, events):
     env = envelope_EMG(filter_EMG(signal_in))
     n_muscles = env.shape[1]
-    for i in range(n_muscles):
-        env[:,i] /= np.mean(env[:,i])
+    env = normalize_EMG(env, events)
 
     d = 0
     for i in range(n_muscles-1):
@@ -35,4 +34,18 @@ def coactivation_EMG(signal_in):
     cc  = 1 / np.max(env, axis=1)
 
     return c*m*cc
+
+# --- Normalization via events
+def normalize_EMG(signal_in, events_in):
+    norm_factor = []
+    for evt in zip(events_in[:-1], events_in[1:]):
+        e1 = int(evt[0]*fs_emg)
+        e2 = int(evt[1]*fs_emg)
+        norm_factor.append(np.max(signal_in[e1:e2,:], axis=0))
+    norm_factor = np.asarray(norm_factor)
+    norm_factor = np.median(norm_factor, axis=0)
+    signal_out = signal_in
+    for i in range(signal_out.shape[1]):
+        signal_out[:,i] /= norm_factor[i]
+    return signal_out
     

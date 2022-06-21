@@ -1,8 +1,9 @@
+from distutils.log import Log
 import scipy.signal as sgn
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.colors import LogNorm
+# from matplotlib.colors import LogNorm
 
 from brisk import fs_imu
 
@@ -80,7 +81,7 @@ def average_by_phase(data_in, idx_phase):
     return out
 
 # --- Plot phases heatmap
-def plot_phases(matrix_in, ax):
+def plot_phases(matrix_in, ax, vmin=0, vmax=1):
     heatmap_args = {
         'cbar': False,
         'annot': True,
@@ -90,7 +91,7 @@ def plot_phases(matrix_in, ax):
             'fontsize': 16
         },
         'cmap': sns.color_palette("YlOrRd", as_cmap=True),
-        'vmin': 0,
-        'vmax': 1,
+        'vmin': vmin,
+        'vmax': vmax,
     }
-    sns.heatmap(matrix_in, **heatmap_args, ax=ax, norm=LogNorm())
+    sns.heatmap(matrix_in, **heatmap_args, ax=ax)

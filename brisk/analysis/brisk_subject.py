@@ -169,6 +169,12 @@ class BriskSubject():
             print_error('Marker events not found.')
 
         return self.cycle_events_absolute
+    
+    # --- Get indexes
+    def get_indexes(self):
+        idx = self.get_absolute_indexes()
+        indexes_out = {k: np.asarray(v-v[0], dtype='int') for k,v in idx.items()}
+        return indexes_out
 
     # --- Get cycle indexes from markers
     def get_marker_indexes(self):
@@ -277,7 +283,7 @@ class BriskSubject():
         self.phase_duration = {}
         self.phases = {}
         for k, v in self.get_raw_imu().items():
-            pd_temp, p_temp = kinematics.phase_count(data_in=v[self.segmentation_labels].values, limits=self.get_limits())
+            pd_temp, p_temp = kinematics.phase_count(data_in_raw=v[self.segmentation_labels].values, limits=self.get_limits())
             self.phase_duration[k] = pd_temp
             self.phases[k] = p_temp
         return self.phases
@@ -295,12 +301,14 @@ class BriskSubject():
         if not self.phases.keys():
             self.get_zones()
         matrices_in = self.fit_to_phases(data_in)
+        matrices_tot = np.asarray([v for v in matrices_in.values()])
+        min_value, max_value = np.min(matrices_tot), np.max(matrices_tot)
         ax_titles = list(matrices_in.keys())
         fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
         for i, v in enumerate(matrices_in.values()):
             row = i%2
             col = int(i/2)
-            kinematics.plot_phases(v, ax=ax[row,col])
+            kinematics.plot_phases(v, ax=ax[row,col], vmin=min_value, vmax=max_value)
             ax[row,col].set_title(
                 ax_titles[i].replace('_', ' ').title(),
                 fontsize=16

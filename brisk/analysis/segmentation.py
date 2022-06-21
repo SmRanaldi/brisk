@@ -44,7 +44,7 @@ def _get_segmentation_indexes(subject, trial):
 
     indexes = sgn.find_peaks(
         c,
-        height=0.5*np.max(c),
+        height=0.3*np.max(c),
         distance=1*fs*np.floor(template.shape[0]/fs)
     )[0]
 
