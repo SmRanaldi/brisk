@@ -295,7 +295,7 @@ class BriskSubject():
         if not self.phases.keys():
             self.get_zones()
         matrices_in = self.fit_to_phases(data_in)
-        fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16))
+        fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
         for i, v in enumerate(matrices_in.values()):
             row = i%2
             col = int(i/2)
