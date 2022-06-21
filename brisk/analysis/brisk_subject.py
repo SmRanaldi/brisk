@@ -31,7 +31,7 @@ class BriskSubject():
         self.raw_moments = {}
         self.raw_cop = {}
         self.phases = {}
-        self.phases_limits = {}
+        self.phases_limits = []
         self.phases_duration = {}
         self.segmented_data = {}
         self.average_data = {}
@@ -267,7 +267,7 @@ class BriskSubject():
 
     # --- Get zones from trunk data
     def get_limits(self):
-        if not self.phases_limits.keys():
+        if not self.phases_limits:
             self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
         return self.phases_limits
 
