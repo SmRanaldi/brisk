@@ -72,7 +72,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'imu.csv'
-                ]))
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_imu):int(self.get_absolute_indexes()[t][-1]*fs_imu),:]
                 for t in self.get_trials()
             }
 
@@ -91,7 +91,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'emg.csv'
-                ]))
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:]
                 for t in self.get_trials()
             }
 
@@ -110,7 +110,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'force.csv'
-                ]))
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_marker):int(self.get_absolute_indexes()[t][-1]*fs_marker),:]
                 for t in self.get_trials()
             }
 
@@ -129,7 +129,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'moment.csv'
-                ]))
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_marker):int(self.get_absolute_indexes()[t][-1]*fs_marker),:]
                 for t in self.get_trials()
             }
 
@@ -148,7 +148,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'cop.csv'
-                ]))
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_marker):int(self.get_absolute_indexes()[t][-1]*fs_marker),:]
                 for t in self.get_trials()
             }
 
@@ -295,10 +295,15 @@ class BriskSubject():
         if not self.phases.keys():
             self.get_zones()
         matrices_in = self.fit_to_phases(data_in)
+        ax_titles = list(matrices_in.keys())
         fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
         for i, v in enumerate(matrices_in.values()):
             row = i%2
             col = int(i/2)
             kinematics.plot_phases(v, ax=ax[row,col])
+            ax[row,col].set_title(
+                ax_titles[i].replace('_', ' ').title(),
+                fontsize=16
+            )
         plt.show(fig)
         return matrices_in

@@ -23,7 +23,7 @@ def coactivation_EMG(signal_in):
     env = envelope_EMG(filter_EMG(signal_in))
     n_muscles = env.shape[1]
     for i in range(n_muscles):
-        env[:,i] /= np.max(env[:,i])
+        env[:,i] /= np.mean(env[:,i])
 
     d = 0
     for i in range(n_muscles-1):

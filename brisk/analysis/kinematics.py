@@ -2,6 +2,7 @@ import scipy.signal as sgn
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.colors import LogNorm
 
 from brisk import fs_imu
 
@@ -28,7 +29,8 @@ def get_zones(dict_in, labels):
     return limits # Limits: first row x-limits, second row y-limits
 
 # --- Count activity in the phases
-def phase_count(data_in, limits):
+def phase_count(data_in_raw, limits):
+    data_in = normalize_imu_data(data_in_raw)
     out_phases = np.zeros((3,3))
     idx_phase = [] # Top left = 0. Bottom right = 8
     for d in range(data_in.shape[0]):
@@ -89,6 +91,6 @@ def plot_phases(matrix_in, ax):
         },
         'cmap': sns.color_palette("YlOrRd", as_cmap=True),
         'vmin': 0,
-        'vmax': np.max(matrix_in),
+        'vmax': 1,
     }
-    sns.heatmap(matrix_in, **heatmap_args, ax=ax)
+    sns.heatmap(matrix_in, **heatmap_args, ax=ax, norm=LogNorm())
