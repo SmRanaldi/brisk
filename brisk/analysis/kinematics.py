@@ -75,8 +75,8 @@ def phase_count(data_in_raw, limits):
 def average_by_phase(data_in, idx_phase):
     out = np.zeros((3,3))
     for i in range(9):
-        row = i%3
-        col = int(i/3)
+        col = i%3
+        row = int(i/3)
         out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
     return out
 
