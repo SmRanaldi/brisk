@@ -268,6 +268,7 @@ class BriskSubject():
         print_ongoing(f'\nUpdating subject {self.name}, parameters...')
         parameters.cycle_parameters(self.name, True)
         parameters.global_parameters(self.name, True)
+        self.import_data()
         self.dump_indexes()
 
 
@@ -278,6 +279,8 @@ class BriskSubject():
         if not np.asarray(self.phases_limits).size:
             self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
         return self.phases_limits
+
+    # *********** Analysis functions *************
 
     # --- Get phase indexes and durations
     def get_zones(self):
