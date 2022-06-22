@@ -33,7 +33,7 @@ class BriskSubject():
         self.raw_cop = {}
         self.phases = {}
         self.phases_limits = []
-        self.phases_duration = {}
+        self.phase_duration = {}
         self.segmented_data = {}
         self.average_data = {}
         self.cycle_events = {} # In seconds
@@ -243,7 +243,7 @@ class BriskSubject():
 
     # --- Dump absolute indexes to db/rawdata
     def dump_indexes(self):
-        if not self.trials:
+        if not self.trials.keys():
             self.import_data()
 
         for t in self.trials:
@@ -268,19 +268,17 @@ class BriskSubject():
         print_ongoing(f'\nUpdating subject {self.name}, parameters...')
         parameters.cycle_parameters(self.name, True)
         parameters.global_parameters(self.name, True)
-        self.import_data()
+        # self.import_data()
         self.dump_indexes()
 
 
-    # *********** DB functions *************
+    # *********** Analysis functions *************
 
     # --- Get zones from trunk data
     def get_limits(self):
         if not np.asarray(self.phases_limits).size:
             self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
         return self.phases_limits
-
-    # *********** Analysis functions *************
 
     # --- Get phase indexes and durations
     def get_zones(self):
@@ -291,6 +289,11 @@ class BriskSubject():
             self.phase_duration[k] = pd_temp
             self.phases[k] = p_temp
         return self.phases
+
+    def get_phase_duration(self):
+        if not self.phase_duration.keys():
+            self.get_zones()
+        return self.phase_duration
     
     # --- Fit to phases
     def fit_to_phases(self, data_in):
