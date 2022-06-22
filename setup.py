@@ -23,6 +23,7 @@ setup(
             'brisk_load_imu=brisk.scripts.import:import_imu',
             'set_brisk_outdir=brisk.scripts.utils_scripts:set_out_dir',
             'brisk_run_subject=brisk.scripts.analysis_scripts:run_subject',
+            'brisk_update_all=brisk.scripts.analysis_scripts:update_all_subjects',
         ]
     },
     package_data = {

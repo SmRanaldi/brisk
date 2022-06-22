@@ -268,6 +268,7 @@ class BriskSubject():
         print_ongoing(f'\nUpdating subject {self.name}, parameters...')
         parameters.cycle_parameters(self.name, True)
         parameters.global_parameters(self.name, True)
+        self.dump_indexes()
 
 
     # *********** DB functions *************

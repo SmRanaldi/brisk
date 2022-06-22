@@ -6,6 +6,7 @@ import os
 import sys
 
 from brisk.analysis import segmentation
+from brisk.analysis import BriskSubject
 from brisk.utils import path
 from brisk import out_dir
 from brisk.utils.cl import *
@@ -29,3 +30,9 @@ def run_subject():
         print_success('Done.')
 
     print()
+
+def update_all_subjects():
+    s_list = path.get_subjects()
+    for s in s_list:
+        subj = BriskSubject(s)
+        subj.update()
