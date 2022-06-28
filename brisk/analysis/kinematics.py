@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 # from matplotlib.colors import LogNorm
 
+import warnings
+
 from brisk import fs_imu
 
 # --- Normalize imu data
@@ -77,8 +79,10 @@ def average_by_phase(data_in, idx_phase):
     for i in range(9):
         col = i%3
         row = int(i/3)
-        out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
-    return out
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
+    return np.nan_to_num(out)
 
 # --- Plot phases heatmap
 def plot_phases(matrix_in, ax, vmin=0, vmax=1):

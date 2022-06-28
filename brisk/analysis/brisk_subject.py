@@ -46,6 +46,7 @@ class BriskSubject():
 
         self.samples_per_cycle = 200
         self.segmentation_labels = ['trunk_acc_y', 'trunk_acc_z']
+        self.trials_order = ['full','half_robot_touch','half_robot','full_robot']
 
     # --- Conversion to string
     def __str__(self) -> str:
@@ -277,8 +278,16 @@ class BriskSubject():
     # --- Get zones from trunk data
     def get_limits(self):
         if not np.asarray(self.phases_limits).size:
+            print_ongoing('Calculating phase limits...')
             self.phases_limits = kinematics.get_zones(self.get_raw_imu(), labels=self.segmentation_labels)
         return self.phases_limits
+
+    # --- Set zones
+    def set_limits(self, limits_in):
+        if (limits_in.shape[0]==2) and (limits_in.shape[1]==2):
+            self.phases_limits = limits_in
+        else:
+            print_error('Wrong limits as input, limits not set')
 
     # --- Get phase indexes and durations
     def get_zones(self):
@@ -312,7 +321,8 @@ class BriskSubject():
         min_value, max_value = np.min(matrices_tot), np.max(matrices_tot)
         ax_titles = list(matrices_in.keys())
         fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
-        for i, v in enumerate(matrices_in.values()):
+        for i, k in enumerate(self.trials_order):
+            v = matrices_in[k]
             row = i%2
             col = int(i/2)
             kinematics.plot_phases(v, ax=ax[row,col], vmin=min_value, vmax=max_value)
