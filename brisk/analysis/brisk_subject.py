@@ -319,15 +319,14 @@ class BriskSubject():
         matrices_in = self.fit_to_phases(data_in)
         matrices_tot = np.asarray([v for v in matrices_in.values()])
         min_value, max_value = np.min(matrices_tot), np.max(matrices_tot)
-        ax_titles = list(matrices_in.keys())
         fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
         for i, k in enumerate(self.trials_order):
             v = matrices_in[k]
-            row = i%2
-            col = int(i/2)
+            col = i%2
+            row = int(i/2)
             kinematics.plot_phases(v, ax=ax[row,col], vmin=min_value, vmax=max_value)
             ax[row,col].set_title(
-                ax_titles[i].replace('_', ' ').title(),
+                k.replace('_', ' ').title(),
                 fontsize=16
             )
         plt.show(fig)
