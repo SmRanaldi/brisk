@@ -1,8 +1,7 @@
-from brisk.analysis import envelope_EMG
 from sklearn.decomposition import NMF
 import numpy as np
 
-from brisk.analysis.emg import envelope_EMG, normalize_EMG
+from brisk.analysis import emg
 from brisk.utils.cl import print_error
 
 NMF_OPTIONS = {
@@ -19,9 +18,9 @@ def VAF(true_data, rec_data):
 # --- Synergy extractor
 def extract_synergies(emg_in, events_in=None):
 
-    env = envelope_EMG(signal_in=emg_in)
+    env = emg.envelope_EMG(signal_in=emg_in)
     if events_in is not None:
-        env = normalize_EMG(signal_in=emg_in, events_in=events_in)
+        env = emg.normalize_EMG(signal_in=emg_in, events_in=events_in)
     if env.shape[0] < env.shape[1]:
         env = env.transpose()
     n_muscles = env.shape[1]

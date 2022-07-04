@@ -8,6 +8,7 @@ import json
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
 from brisk.analysis import segmentation, parameters, kinematics
+from brisk.analysis.synergies import extract_synergies
 from brisk.utils.cl import print_error, print_ongoing, print_warning
 from brisk.data_importer.imu import get_imu_config, load_raw_imu
 from brisk.utils import path
@@ -40,6 +41,11 @@ class BriskSubject():
         self.cycle_events_marker = {} # In seconds
         self.cycle_events_absolute = {} # In seconds
         self.parameters = []
+        self.W_tot = {}
+        self.H_tot = {}
+        self.VAF_curve = {}
+        self.VAF_muscles = {}
+        self.n_syn = None
         self.age = None
         self.weight = None
         self.height = None
@@ -96,7 +102,7 @@ class BriskSubject():
                 for t in self.get_trials()
             }
 
-        return self.raw_emg
+        return self.raw_emg[:,:-2] # REMOVED PECTORALIS
 
     # --- Import forces
     def get_raw_forces(self):
@@ -331,3 +337,23 @@ class BriskSubject():
             )
         plt.show(fig)
         return matrices_in
+
+    # --- Get synergies
+    def get_synergies(self):
+        emg_tmp = self.get_raw_emg()
+        events_tmp = self.get_indexes()
+        if not all([self.H_tot.keys(), self.W_tot.keys(), self.VAF_curve.keys(), self.VAF_muscles.keys()]):
+            print_ongoing('Extracting synergies...')
+            for t in emg_tmp.keys():
+                self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t], events_tmp[t])
+        return self.VAF_curve, self.W_tot, self.H_tot, self.VAF_muscles
+
+    # --- Plot VAF curves
+    def plot_VAF(self):
+        VAF_tmp, _, _, VAFm_tmp = self.get_synergies()
+        fig, ax = plt.subplots(2, len(VAF_tmp.keys()), facecolor='w', figsize=(12,8))
+        for i, k in enumerate(VAF_tmp.keys()):
+            ax[0,i].plot(VAF_tmp[k])
+            ax[1,i].plot(VAFm_tmp[k])
+            ax[0,i].set_title(k.replace('_',' ').title, fontsize=16)
+        plt.show()
