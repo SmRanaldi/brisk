@@ -98,11 +98,11 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'emg.csv'
-                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:]
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:-2] # REMOVED PECTORALIS
                 for t in self.get_trials()
             }
 
-        return self.raw_emg[:,:-2] # REMOVED PECTORALIS
+        return self.raw_emg[:,:-2]
 
     # --- Import forces
     def get_raw_forces(self):
@@ -346,6 +346,7 @@ class BriskSubject():
             print_ongoing('Extracting synergies...')
             for t in emg_tmp.keys():
                 self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t], events_tmp[t])
+                print(self.VAF_curve[t].shape)
         return self.VAF_curve, self.W_tot, self.H_tot, self.VAF_muscles
 
     # --- Plot VAF curves
