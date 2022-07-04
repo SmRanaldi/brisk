@@ -6,7 +6,7 @@ from brisk.utils.cl import print_error
 
 NMF_OPTIONS = {
     'solver': 'mu',
-    'max_iter': 500,
+    'max_iter': 1000,
     'init': 'random'
 }
 
@@ -15,14 +15,29 @@ def VAF(true_data, rec_data):
 
     return 1 - np.sum((true_data.flatten() - rec_data.flatten())**2)/np.sum(rec_data.flatten()**2)
 
-# --- Synergy extractor
-def extract_synergies(emg_in, events_in=None):
+# --- Remove negative values
+def remove_negative(data_in):
+    data_out = data_in.copy()
+    for i in range(data_in.shape[1]):
+        ths = 1e-6*np.max(data_in[:,i])
+        data_out[data_in[:,i]<ths,i] = ths
+    return data_out
 
-    env = emg.envelope_EMG(signal_in=emg_in)
+# --- Downsample EMG
+def downsample_EMG(data_in, ds_factor):
+    data_out = data_in[::ds_factor,:]
+    return data_out
+
+# --- Synergy extractor
+def extract_synergies(emg_in, events_in=None, ds_factor=10):
+
+    env = emg.envelope_EMG(signal_in=emg.filter_EMG(emg_in))
     if events_in is not None:
-        env = emg.normalize_EMG(signal_in=emg_in, events_in=events_in)
+        env = emg.normalize_EMG(signal_in=env, events_in=events_in)
     if env.shape[0] < env.shape[1]:
         env = env.transpose()
+    env = downsample_EMG(env, ds_factor)
+    env = remove_negative(env)
     n_muscles = env.shape[1]
 
     H_tot = []
@@ -34,7 +49,7 @@ def extract_synergies(emg_in, events_in=None):
         nmf = NMF(n_components=i+1, **NMF_OPTIONS)
         H_tot.append(nmf.fit_transform(env).transpose())
         W_tot.append(nmf.components_.transpose())
-        rec = W_tot[-1]*H_tot[-1]
+        rec = (W_tot[-1]@H_tot[-1]).transpose()
         VAF_curve.append(VAF(env, rec))
         VAF_muscles.append([VAF(env[:,j], rec[:,j]) for j in range(n_muscles)])
     

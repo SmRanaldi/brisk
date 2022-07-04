@@ -345,16 +345,22 @@ class BriskSubject():
         if not all([self.H_tot.keys(), self.W_tot.keys(), self.VAF_curve.keys(), self.VAF_muscles.keys()]):
             print_ongoing('Extracting synergies...')
             for t in emg_tmp.keys():
-                self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t], events_tmp[t])
-                print(self.VAF_curve[t].shape)
+                self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t].values, events_tmp[t])
         return self.VAF_curve, self.W_tot, self.H_tot, self.VAF_muscles
 
     # --- Plot VAF curves
-    def plot_VAF(self):
+    def plot_VAF(self, ths=None):
         VAF_tmp, _, _, VAFm_tmp = self.get_synergies()
-        fig, ax = plt.subplots(2, len(VAF_tmp.keys()), facecolor='w', figsize=(12,8))
+        fig, ax = plt.subplots(2, len(VAF_tmp.keys()), facecolor='w', figsize=(20,10), sharex=True, sharey='row')
         for i, k in enumerate(VAF_tmp.keys()):
-            ax[0,i].plot(VAF_tmp[k])
-            ax[1,i].plot(VAFm_tmp[k])
-            ax[0,i].set_title(k.replace('_',' ').title, fontsize=16)
+            t = np.linspace(1, VAF_tmp[k].size, VAF_tmp[k].size)
+            ax[0,i].plot(t, VAF_tmp[k], 'k')
+            if ths is not None:
+                ax[0,i].plot(t, np.ones(t.shape)*ths, 'r')
+            ax[1,i].plot(t, VAFm_tmp[k], 'k')
+            if ths is not None:
+                ax[1,i].plot(t, np.ones(t.shape)*ths, 'r')
+            ax[0,i].set_title(k.replace('_',' ').title(), fontsize=16)
+            ax[0,i].grid('on')
+            ax[1,i].grid('on')
         plt.show()
