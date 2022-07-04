@@ -102,7 +102,7 @@ class BriskSubject():
                 for t in self.get_trials()
             }
 
-        return self.raw_emg[:,:-2]
+        return self.raw_emg
 
     # --- Import forces
     def get_raw_forces(self):
