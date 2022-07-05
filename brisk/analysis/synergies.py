@@ -117,7 +117,7 @@ def nnr(emg_in, w_in, events_in=None, ds_factor=DS_FACTOR):
     if not convergence:
         print_error('Reconstruction algorithm did not converge')
 
-    rec = (w_in@h).transpose()
+    rec = (w_in@h)
     vaf_ = VAF(data_in, rec)
         
     return h, vaf_

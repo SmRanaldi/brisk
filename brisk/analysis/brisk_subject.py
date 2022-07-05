@@ -405,7 +405,7 @@ class BriskSubject():
         W_tot = []
         for t in trials_:
             W_tot.append(W_all[t])
-        W_template = np.mean(np.asarray(W_tot), axis=0).squeeze()
+        W_template = np.median(np.asarray(W_tot), axis=0).squeeze()
         for t in trials_:
             sort_idx = sort_W(W_template, W_all[t])
             W_all[t] = W_all[t][:,sort_idx]
@@ -415,7 +415,7 @@ class BriskSubject():
         W_tot = []
         for t in trials_:
             W_tot.append(W_all[t])
-        W_template = np.mean(np.asarray(W_tot), axis=0).squeeze()
+        W_template = np.median(np.asarray(W_tot), axis=0).squeeze()
         self.W_template = W_template
 
         return self.W, self.H
