@@ -8,7 +8,7 @@ import json
 import itertools
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
-from brisk.analysis import segmentation, parameters, kinematics
+from brisk.analysis import segmentation, parameters, kinematics, emg
 from brisk.analysis.synergies import VAF, extract_synergies, nnr, sort_W
 from brisk.utils.cl import print_error, print_ongoing, print_success, print_warning
 from brisk.utils import path
@@ -106,9 +106,14 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'emg.csv'
-                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),self.muscle_indexes] # REMOVED PECTORALIS
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:]
                 for t in self.get_trials()
             }
+            for t in self.raw_emg.keys():
+                self.raw_emg[t].values[:,-1] = emg.remove_ECG(self.raw_emg[t].values[:,-1])
+                self.raw_emg[t].values[:,-2] = emg.remove_ECG(self.raw_emg[t].values[:,-2])
+        for t in self.raw_emg.keys():
+            self.raw_emg[t] = self.raw_emg[t].iloc[:,self.muscle_indexes]
 
         return self.raw_emg
 
@@ -477,3 +482,4 @@ class BriskSubject():
         else:
             print_error('Invalid muscle config. Setting to all muscles.')
             self.muscle_indexes = list(range(14)) # Change here for all muscles
+        self.raw_emg = {}

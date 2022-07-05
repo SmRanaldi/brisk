@@ -2,6 +2,7 @@ import numpy as np
 import scipy.signal as sgn
 
 from brisk import fs_emg
+from brisk.utils.signal import norm_templatematching, norm_autocorrelation
 
 # --- Filtering EMG
 def filter_EMG(signal_in):
@@ -48,4 +49,18 @@ def normalize_EMG(signal_in, events_in):
     for i in range(signal_out.shape[1]):
         signal_out[:,i] /= norm_factor[i]
     return signal_out
-    
+
+# --- Remove ECG
+def remove_ECG(signal_in):
+    b, a = sgn.butter(4, 250/fs_emg, btype='low')
+    signal_lp = sgn.filtfilt(b, a, signal_in[:7000])
+    signal_out = signal_in.copy()
+    xcorr = np.abs(norm_autocorrelation(signal_lp))
+    pk_loc_template = sgn.find_peaks(xcorr.squeeze(), distance=200, height=np.mean(xcorr))[0]
+    template = signal_lp[pk_loc_template[0]:pk_loc_template[0]+300]
+    tm = norm_templatematching(signal_in, template)
+    pk_loc = sgn.find_peaks(tm, distance=400)[0]
+    for p in pk_loc:
+        scale_val = tm[p]
+        signal_out[p:p+template.size] -= scale_val*template
+    return signal_out
