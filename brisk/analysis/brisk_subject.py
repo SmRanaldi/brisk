@@ -60,6 +60,8 @@ class BriskSubject():
         self.segmentation_labels = ['trunk_acc_y', 'trunk_acc_z']
         self.trials_order = ['full','half_robot_touch','half_robot','full_robot']
 
+        self.set_muscles('all')
+
     # --- Conversion to string
     def __str__(self) -> str:
         return self.name.title()
@@ -104,7 +106,7 @@ class BriskSubject():
                     t,
                     'rawdata',
                     'emg.csv'
-                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:-2] # REMOVED PECTORALIS
+                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),self.muscle_indexes] # REMOVED PECTORALIS
                 for t in self.get_trials()
             }
 
@@ -451,3 +453,27 @@ class BriskSubject():
         if not self.H_reconstruction.keys():
             self.reconstruct_H(W_template_=W_template_)
         return self.VAF_reconstruction
+
+    # --- Set muscles for analysis
+    def set_muscles(self, str_in):
+        if str_in == 'all':
+            print_success('EMG analysis set to all muscles')
+            self.muscle_indexes = list(range(14)) # Change here for all muscles
+        elif str_in == 'legs':
+            print_success('EMG analysis set to both legs')
+            self.muscle_indexes = [0,1,2,3,4,5,6,7,12,13]
+        elif str_in == 'right':
+            print_success('EMG analysis set to right leg')
+            self.muscle_indexes = [0,2,4,6,12]
+        elif str_in == 'left':
+            print_success('EMG analysis set to left leg')
+            self.muscle_indexes = [1,3,5,7,13]
+        elif str_in == 'upper':
+            print_success('EMG analysis set to upper body')
+            self.muscle_indexes = [8,9,10,11,14,15]
+        elif str_in == 'trunk':
+            print_success('EMG analysis set to trunk')
+            self.muscle_indexes = [10,11,14,15]
+        else:
+            print_error('Invalid muscle config. Setting to all muscles.')
+            self.muscle_indexes = list(range(14)) # Change here for all muscles
