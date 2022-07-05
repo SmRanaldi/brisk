@@ -112,8 +112,8 @@ class BriskSubject():
             for t in self.raw_emg.keys():
                 self.raw_emg[t].values[:,-1] = emg.remove_ECG(self.raw_emg[t].values[:,-1])
                 self.raw_emg[t].values[:,-2] = emg.remove_ECG(self.raw_emg[t].values[:,-2])
-        for t in self.raw_emg.keys():
-            self.raw_emg[t] = self.raw_emg[t].iloc[:,self.muscle_indexes]
+            for t in self.raw_emg.keys():
+                self.raw_emg[t] = self.raw_emg[t].iloc[:,self.muscle_indexes]
 
         return self.raw_emg
 
