@@ -63,33 +63,6 @@ def extract_synergies(emg_in, events_in=None, ds_factor=DS_FACTOR):
     
     return np.asarray(VAF_curve), W_tot, H_tot, np.asarray(VAF_muscles)
     
-# --- Reconstructor
-def nnr(data_in, w_in, max_iter, tol):
-    if data_in.shape[1]<data_in.shape[0]:
-        data_in = data_in.transpose()
-    if w_in.shape[0]<w_in.shape[1]:
-        w_in = w_in.transpose()
-    c = 0
-    convergence = False
-    err = []
-    h = np.random.rand(w_in.shape[1], data_in.shape[1])
-    while c<max_iter:
-        num = w_in.transpose()@data_in
-        den = w_in.transpose()@w_in@h
-        h *= num/den
-        err.append(np.sqrt(np.sum((data_in.flatten() - (w_in@h).flatten())**2)))
-
-        if c>10:
-            if np.abs(err[-10] - err[-1]) < tol:
-                c=max_iter
-                convergence = True
-        c += 1
-
-    if not convergence:
-        print_error('Algorithm did not converge')
-        
-    return h
-
 
 # --- Correlation between W
 def W_dot(W1, W2):
@@ -113,6 +86,7 @@ def sort_W(W_temp, W_in): # Data needs to be [N_muscles x N_synergies]
         all_d[max_ref[0],:] = 0
         all_d[:, max_ref[1]] = 0
     return idx_out
+
 
 # --- Non-negative reconstruction
 def nnr(emg_in, w_in, events_in=None, ds_factor=DS_FACTOR):
