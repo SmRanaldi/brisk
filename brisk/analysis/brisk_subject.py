@@ -9,7 +9,7 @@ import itertools
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
 from brisk.analysis import segmentation, parameters, kinematics
-from brisk.analysis.synergies import extract_synergies, sort_W
+from brisk.analysis.synergies import VAF, extract_synergies, nnr, sort_W
 from brisk.utils.cl import print_error, print_ongoing, print_success, print_warning
 from brisk.utils import path
 
@@ -45,7 +45,10 @@ class BriskSubject():
         self.H_tot = {}
         self.W = {}
         self.H = {}
+        self.VAF_extraction = {}
         self.W_template = []
+        self.H_reconstruction = {}
+        self.VAF_reconstruction = {}
         self.VAF_curve = {}
         self.VAF_muscles = {}
         self.n_syn = None
@@ -387,11 +390,12 @@ class BriskSubject():
                 for i in range(self.n_syn):
                     self.H[t][i,:] *= np.linalg.norm(self.H[t][i,:])
                     self.W[t][:,i] /= np.linalg.norm(self.W[t][:,i])
-        return self.W, self.H
+            self.VAF_extraction = {k: v[self.n_syn-1] for k, v in self.VAF_curve.items()}
+        return self.W, self.H, self.VAF_extraction
 
     # --- Order synergies
     def order_synergies(self):
-        W_all, H_all = self.get_synergy_components()
+        W_all, H_all, _ = self.get_synergy_components()
         trials_ = self.get_trials()
         W_ref = W_all[trials_[0]]
         for t in trials_[1:]:
@@ -416,8 +420,34 @@ class BriskSubject():
 
         return self.W, self.H
 
-        # --- Get W template
-        def get_W_template(self):
-            if not self.W_template:
-                self.order_synergies()
-            return self.W_template
+    # --- Get W template
+    def get_W_template(self):
+        if not list(self.W_template):
+            self.order_synergies()
+        return self.W_template
+
+    # --- Reconstruction with template
+    def reconstruct_H(self, W_template_=None):
+        if W_template_ is not None:
+            self.W_template = W_template_
+        else:
+            W_template_ = self.get_W_template()
+        emg_tmp = self.get_raw_emg()
+        events_tmp = self.get_indexes()
+        print_ongoing('Reconstructing synergies')
+        for t in emg_tmp.keys():
+            self.H_reconstruction[t], self.VAF_reconstruction[t] = nnr(emg_tmp[t].values, W_template_, events_tmp[t])
+
+        return self.H_reconstruction
+
+    # --- Get reconstructed profile
+    def get_H_rec(self, W_template_=None):
+        if not self.H_reconstruction.keys():
+            self.reconstruct_H(W_template_=W_template_)
+        return self.H_reconstruction
+
+    # --- Get reconstructed VAF
+    def get_VAF_rec(self, W_template_=None):
+        if not self.H_reconstruction.keys():
+            self.reconstruct_H(W_template_=W_template_)
+        return self.VAF_reconstruction

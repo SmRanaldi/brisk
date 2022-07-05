@@ -6,9 +6,12 @@ from brisk.utils.cl import print_error
 
 NMF_OPTIONS = {
     'solver': 'mu',
-    'max_iter': 1000,
+    'max_iter': 1500,
+    'tol': 1e-3,
     'init': 'random'
 }
+
+DS_FACTOR = 30
 
 # --- VAF Function
 def VAF(true_data, rec_data):
@@ -28,9 +31,8 @@ def downsample_EMG(data_in, ds_factor):
     data_out = data_in[::ds_factor,:]
     return data_out
 
-# --- Synergy extractor
-def extract_synergies(emg_in, events_in=None, ds_factor=30):
-
+# --- Prepare EMG for synergy analysis
+def prepare_EMG(emg_in, events_in=None, ds_factor=DS_FACTOR):
     env = emg.envelope_EMG(signal_in=emg.filter_EMG(emg_in))
     if events_in is not None:
         env = emg.normalize_EMG(signal_in=env, events_in=events_in)
@@ -38,6 +40,12 @@ def extract_synergies(emg_in, events_in=None, ds_factor=30):
         env = env.transpose()
     env = downsample_EMG(env, ds_factor)
     env = remove_negative(env)
+    return env
+
+# --- Synergy extractor
+def extract_synergies(emg_in, events_in=None, ds_factor=DS_FACTOR):
+
+    env = prepare_EMG(emg_in=emg_in, events_in=events_in, ds_factor=ds_factor)
     n_muscles = env.shape[1]
 
     H_tot = []
@@ -105,3 +113,37 @@ def sort_W(W_temp, W_in): # Data needs to be [N_muscles x N_synergies]
         all_d[max_ref[0],:] = 0
         all_d[:, max_ref[1]] = 0
     return idx_out
+
+# --- Non-negative reconstruction
+def nnr(emg_in, w_in, events_in=None, ds_factor=DS_FACTOR):
+    
+    data_in = prepare_EMG(emg_in=emg_in, events_in=events_in, ds_factor=ds_factor)
+    max_iter = NMF_OPTIONS['max_iter']
+    tol = NMF_OPTIONS['tol']
+    if data_in.shape[1]<data_in.shape[0]:
+        data_in = data_in.transpose()
+    if w_in.shape[0]<w_in.shape[1]:
+        w_in = w_in.transpose()
+    c = 0
+    convergence = False
+    err = []
+    h = np.random.rand(w_in.shape[1], data_in.shape[1])
+    while c<max_iter:
+        num = w_in.transpose()@data_in
+        den = w_in.transpose()@w_in@h
+        h *= num/den
+        err.append(np.sqrt(np.sum((data_in.flatten() - (w_in@h).flatten())**2)))
+
+        if c>10:
+            if np.abs(err[-10] - err[-1]) < tol:
+                c=max_iter
+                convergence = True
+        c += 1
+
+    if not convergence:
+        print_error('Reconstruction algorithm did not converge')
+
+    rec = (w_in@h).transpose()
+    vaf_ = VAF(data_in, rec)
+        
+    return h, vaf_
