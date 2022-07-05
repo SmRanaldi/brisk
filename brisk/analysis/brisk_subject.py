@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 
 import os
 import json
+import itertools
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
 from brisk.analysis import segmentation, parameters, kinematics
-from brisk.analysis.synergies import extract_synergies
-from brisk.utils.cl import print_error, print_ongoing, print_warning
-from brisk.data_importer.imu import get_imu_config, load_raw_imu
+from brisk.analysis.synergies import extract_synergies, sort_W
+from brisk.utils.cl import print_error, print_ongoing, print_success, print_warning
 from brisk.utils import path
 
 # Class for the brisk subject
@@ -43,6 +43,9 @@ class BriskSubject():
         self.parameters = []
         self.W_tot = {}
         self.H_tot = {}
+        self.W = {}
+        self.H = {}
+        self.W_template = []
         self.VAF_curve = {}
         self.VAF_muscles = {}
         self.n_syn = None
@@ -364,3 +367,57 @@ class BriskSubject():
             ax[0,i].grid('on')
             ax[1,i].grid('on')
         plt.show()
+
+    # --- Set number of synergies
+    def set_nsyn(self, n_in):
+        if n_in<1:
+            print_error('Invalid number of synergies')
+        else:
+            self.n_syn = int(np.round(n_in))
+            print_success(f'Number of synergies set to {self.n_syn}')
+        
+    # --- Get synergy components
+    def get_synergy_components(self):
+        if self.n_syn is None:
+            print_error('Define number of synergies before extracting components')
+        else:
+            for t in self.W_tot.keys():
+                self.W[t] = np.asarray(self.W_tot[t][self.n_syn - 1])
+                self.H[t] = np.asarray(self.H_tot[t][self.n_syn - 1])
+                for i in range(self.n_syn):
+                    self.H[t][i,:] *= np.linalg.norm(self.H[t][i,:])
+                    self.W[t][:,i] /= np.linalg.norm(self.W[t][:,i])
+        return self.W, self.H
+
+    # --- Order synergies
+    def order_synergies(self):
+        W_all, H_all = self.get_synergy_components()
+        trials_ = self.get_trials()
+        W_ref = W_all[trials_[0]]
+        for t in trials_[1:]:
+            sort_idx = sort_W(W_ref, W_all[t])
+            W_all[t] = W_all[t][:,sort_idx]
+            H_all[t] = H_all[t][sort_idx,:]
+        W_tot = []
+        for t in trials_:
+            W_tot.append(W_all[t])
+        W_template = np.mean(np.asarray(W_tot), axis=0).squeeze()
+        for t in trials_:
+            sort_idx = sort_W(W_template, W_all[t])
+            W_all[t] = W_all[t][:,sort_idx]
+            H_all[t] = H_all[t][sort_idx,:] 
+        self.W = W_all
+        self.H = H_all
+        W_tot = []
+        for t in trials_:
+            W_tot.append(W_all[t])
+        W_template = np.mean(np.asarray(W_tot), axis=0).squeeze()
+        self.W_template = W_template
+
+        return self.W, self.H
+
+        # --- Get W template
+        def get_W_template(self):
+            if not self.W_template:
+                self.order_synergies()
+            return self.W_template

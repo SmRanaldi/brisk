@@ -29,7 +29,7 @@ def downsample_EMG(data_in, ds_factor):
     return data_out
 
 # --- Synergy extractor
-def extract_synergies(emg_in, events_in=None, ds_factor=10):
+def extract_synergies(emg_in, events_in=None, ds_factor=30):
 
     env = emg.envelope_EMG(signal_in=emg.filter_EMG(emg_in))
     if events_in is not None:
@@ -81,3 +81,27 @@ def nnr(data_in, w_in, max_iter, tol):
         print_error('Algorithm did not converge')
         
     return h
+
+
+# --- Correlation between W
+def W_dot(W1, W2):
+    return np.dot(W1/np.linalg.norm(W1), W2/np.linalg.norm(W2))
+
+
+# --- Sort via a template
+def sort_W(W_temp, W_in): # Data needs to be [N_muscles x N_synergies]
+    n_syn = W_temp.shape[1]
+    all_d = []
+    for i in range(n_syn):
+        all_d_tmp = []
+        for j in range(n_syn):
+            all_d_tmp.append(W_dot(W_temp[:,i], W_in[:,j]))
+        all_d.append(all_d_tmp)
+    all_d = np.vstack(all_d) # Rows: reference. Columns: data to sort
+    idx_out = np.zeros(n_syn, dtype=int)
+    for i in range(n_syn):
+        max_ref = np.unravel_index(all_d.argmax(), all_d.shape)
+        idx_out[max_ref[0]] = max_ref[1]
+        all_d[max_ref[0],:] = 0
+        all_d[:, max_ref[1]] = 0
+    return idx_out
