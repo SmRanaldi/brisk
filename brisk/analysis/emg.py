@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal as sgn
+from sklearn.decomposition import PCA
 
 from brisk import fs_emg
 from brisk.utils.signal import norm_templatematching, norm_autocorrelation
@@ -51,24 +52,26 @@ def normalize_EMG(signal_in, events_in):
     return signal_out
 
 # --- Remove ECG
-def remove_ECG(signal_in, mode='multi'):
+def remove_ECG(signal_in, mode='pca'):
     b, a = sgn.butter(4, 450/(fs_emg/2), btype='low')
     bb, aa = sgn.butter(4, 5/(fs_emg/2), btype='low')
     b_bp, a_bp = sgn.butter(4, [100/(fs_emg/2), 250/(fs_emg/2)], btype='bandpass')
-    half_l_template = 150
-    half_l = 350
+    half_l_template = 100
+    half_l = 400
     signal_lp = sgn.filtfilt(b, a, signal_in)
     signal_out = filter_EMG(signal_in)
     xcorr = sgn.filtfilt(bb, aa, np.abs(norm_autocorrelation(signal_lp[7000:14000])))
-    pk_loc_template = sgn.find_peaks(xcorr[500:].squeeze(), distance=500, height=np.mean(xcorr[500:]))[0] + 500 + 7000
-    template = signal_lp[pk_loc_template[1]-350:pk_loc_template[1]+350].copy()
+    # pk_loc_template = sgn.find_peaks(xcorr[500:].squeeze(), distance=500, height=np.mean(xcorr[500:])+2*np.std(xcorr[500:]))[0] + 500 + 7000
+    # template = signal_lp[pk_loc_template[1]-350:pk_loc_template[1]+350].copy()
+    pk_loc_template = np.argmax(xcorr[1500:].squeeze()) + 1500 + 7000
+    template = signal_lp[pk_loc_template-half_l:pk_loc_template+half_l].copy()
     pk_loc_template = np.argmax(template[half_l_template:-half_l_template]) + half_l_template
     template = template[pk_loc_template-half_l_template:pk_loc_template+half_l_template]
     tm = norm_templatematching(signal_out, template)
     pk_loc = sgn.find_peaks(tm, distance=500, height=np.mean(tm)+np.std(tm))[0]
-    pk_loc = pk_loc[pk_loc < signal_out.shape[0] - template.shape[0]]
-    pk_loc = pk_loc[pk_loc > template.shape[0]]
-    if mode == 'multi':
+    pk_loc = pk_loc[pk_loc < signal_out.shape[0] - 2*half_l]
+    pk_loc = pk_loc[pk_loc > 2*half_l]
+    if (mode == 'multi') :
         half_l  = 500
         pk_loc = pk_loc[pk_loc < signal_out.shape[0] - half_l]
         pk_loc = pk_loc[pk_loc > half_l]
@@ -80,9 +83,20 @@ def remove_ECG(signal_in, mode='multi'):
         template = template[pk_loc_template-half_l_template:pk_loc_template+half_l_template]
         tm = norm_templatematching(signal_lp, template)
         pk_loc = sgn.find_peaks(tm, distance=500, height=np.mean(tm)+np.abs(tm))[0]
-        pk_loc = pk_loc[pk_loc < signal_out.shape[0] - half_l]
-        pk_loc = pk_loc[pk_loc > half_l]
+        pk_loc = pk_loc[pk_loc < signal_out.shape[0] - 2*half_l]
+        pk_loc = pk_loc[pk_loc > 2*half_l]
     for p in pk_loc:
-        signal_out[p-half_l_template:p+half_l_template] -= (template/np.max(np.abs(template)))*np.max(np.abs(signal_out[p-half_l_template:p+half_l_template]))
-        signal_out[p-half_l:p+half_l] = sgn.filtfilt(b_bp, a_bp, signal_out[p-half_l:p+half_l])
+        signal_out[p:p+2*half_l_template] -= (template/np.max(np.abs(template)))*np.max(np.abs(signal_out[p:p+2*half_l_template]))
+        signal_out[p-2*half_l:p+2*half_l] = sgn.filtfilt(b_bp, a_bp, signal_out[p-2*half_l:p+2*half_l])
+    if mode == 'pca':
+        pca = PCA(n_components=2) 
+        ref_signal = pca.fit_transform(
+            np.concatenate([
+                signal_out.reshape(-1,1),
+                (signal_in - signal_out).reshape(-1,1)
+            ], axis=1)
+        )[:,0].squeeze()
+        for p in pk_loc:
+            signal_out[p:p+2*half_l_template] -= (ref_signal[p:p+2*half_l_template]/np.max(ref_signal[p:p+2*half_l_template]))*np.max(signal_out[p:p+2*half_l_template])
+            signal_out[p-2*half_l:p+2*half_l] = sgn.filtfilt(b_bp, a_bp, signal_out[p-2*half_l:p+2*half_l])
     return signal_out, template
