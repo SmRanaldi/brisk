@@ -6,15 +6,15 @@ from brisk.utils.signal import norm_templatematching, norm_autocorrelation
 
 # --- Filtering EMG
 def filter_EMG(signal_in):
-    b, a = sgn.butter(4, np.array([25, 350])/fs_emg, btype='bandpass')
+    b, a = sgn.butter(4, np.array([25, 400])/(fs_emg/2), btype='bandpass')
     signal_out = sgn.filtfilt(b, a, signal_in, axis=0)
-    b, a = sgn.butter(3, np.array([49.5, 50.5])/fs_emg, btype='bandstop')
+    b, a = sgn.butter(3, np.array([49.5, 50.5])/(fs_emg/2), btype='bandstop')
     signal_out = sgn.filtfilt(b, a, signal_out, axis=0)
     return signal_out
 
 # --- Envelope extraction
 def envelope_EMG(signal_in):
-    b, a = sgn.butter(3, 5/fs_emg, btype='lowpass')
+    b, a = sgn.butter(3, 5/(fs_emg/2), btype='lowpass')
     env = sgn.filtfilt(b, a, np.abs(signal_in), axis=0)
     env[np.where(env<1e-4*np.max(env))] = 1e-4*np.max(env)
     return env
@@ -51,16 +51,38 @@ def normalize_EMG(signal_in, events_in):
     return signal_out
 
 # --- Remove ECG
-def remove_ECG(signal_in):
-    b, a = sgn.butter(4, 250/fs_emg, btype='low')
-    signal_lp = sgn.filtfilt(b, a, signal_in[:7000])
-    signal_out = signal_in.copy()
-    xcorr = np.abs(norm_autocorrelation(signal_lp))
-    pk_loc_template = sgn.find_peaks(xcorr.squeeze(), distance=200, height=np.mean(xcorr))[0]
-    template = signal_lp[pk_loc_template[0]:pk_loc_template[0]+300]
-    tm = norm_templatematching(signal_in, template)
-    pk_loc = sgn.find_peaks(tm, distance=400)[0]
+def remove_ECG(signal_in, mode='multi'):
+    b, a = sgn.butter(4, 450/(fs_emg/2), btype='low')
+    bb, aa = sgn.butter(4, 5/(fs_emg/2), btype='low')
+    b_bp, a_bp = sgn.butter(4, [100/(fs_emg/2), 250/(fs_emg/2)], btype='bandpass')
+    half_l_template = 150
+    half_l = 350
+    signal_lp = sgn.filtfilt(b, a, signal_in)
+    signal_out = filter_EMG(signal_in)
+    xcorr = sgn.filtfilt(bb, aa, np.abs(norm_autocorrelation(signal_lp[7000:14000])))
+    pk_loc_template = sgn.find_peaks(xcorr[500:].squeeze(), distance=500, height=np.mean(xcorr[500:]))[0] + 500 + 7000
+    template = signal_lp[pk_loc_template[1]-350:pk_loc_template[1]+350].copy()
+    pk_loc_template = np.argmax(template[half_l_template:-half_l_template]) + half_l_template
+    template = template[pk_loc_template-half_l_template:pk_loc_template+half_l_template]
+    tm = norm_templatematching(signal_out, template)
+    pk_loc = sgn.find_peaks(tm, distance=500, height=np.mean(tm)+np.std(tm))[0]
+    pk_loc = pk_loc[pk_loc < signal_out.shape[0] - template.shape[0]]
+    pk_loc = pk_loc[pk_loc > template.shape[0]]
+    if mode == 'multi':
+        half_l  = 500
+        pk_loc = pk_loc[pk_loc < signal_out.shape[0] - half_l]
+        pk_loc = pk_loc[pk_loc > half_l]
+        qrs_all = []
+        for p in pk_loc:
+            qrs_all.append(signal_in[p-half_l:p+half_l])
+        template = np.mean(np.asarray(qrs_all),axis=0).squeeze()
+        pk_loc_template = np.argmax(template[half_l_template:-half_l_template]) + half_l_template
+        template = template[pk_loc_template-half_l_template:pk_loc_template+half_l_template]
+        tm = norm_templatematching(signal_lp, template)
+        pk_loc = sgn.find_peaks(tm, distance=500, height=np.mean(tm)+np.abs(tm))[0]
+        pk_loc = pk_loc[pk_loc < signal_out.shape[0] - half_l]
+        pk_loc = pk_loc[pk_loc > half_l]
     for p in pk_loc:
-        scale_val = tm[p]
-        signal_out[p:p+template.size] -= scale_val*template
-    return signal_out
+        signal_out[p-half_l_template:p+half_l_template] -= (template/np.max(np.abs(template)))*np.max(np.abs(signal_out[p-half_l_template:p+half_l_template]))
+        signal_out[p-half_l:p+half_l] = sgn.filtfilt(b_bp, a_bp, signal_out[p-half_l:p+half_l])
+    return signal_out, template

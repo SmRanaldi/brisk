@@ -94,24 +94,47 @@ class BriskSubject():
         return self.raw_imu
 
     # --- Import EMG
-    def get_raw_emg(self):
+    def get_raw_emg(self, remove_ecg=False, with_ecg=False):
         
         if not os.path.exists(self.db_path):
             print_error(f'Subject {self.name} not found in the archive.')
             return
+        if remove_ecg or with_ecg:
+            self.raw_emg = {}
         if not self.raw_emg.keys():
-            self.raw_emg = {
-                t: pd.read_csv(path.join_path([
-                    self.db_path,
-                    t,
-                    'rawdata',
-                    'emg.csv'
-                ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:]
-                for t in self.get_trials()
-            }
-            for t in self.raw_emg.keys():
-                self.raw_emg[t].values[:,-1] = emg.remove_ECG(self.raw_emg[t].values[:,-1])
-                self.raw_emg[t].values[:,-2] = emg.remove_ECG(self.raw_emg[t].values[:,-2])
+            for t in self.get_trials():
+                emg_raw_filename = path.join_path([
+                        self.db_path,
+                        t,
+                        'rawdata',
+                        'emg.csv'
+                    ])
+                emg_noecg_filename = path.join_path([
+                        self.db_path,
+                        t,
+                        'rawdata',
+                        'emg_noecg.csv'
+                    ])
+                if (os.path.exists(emg_noecg_filename)) and not (remove_ecg or with_ecg):
+                    print_ongoing(f'Using saved noECG data for trial {t}')
+                    filename_ok = emg_noecg_filename
+                else:
+                    if with_ecg:
+                        print_ongoing(f'Using raw EMG for trial {t}')
+                    filename_ok = emg_raw_filename
+                    remove_ecg = True
+                self.raw_emg[t] = pd.read_csv(filename_ok)
+                if remove_ecg and not with_ecg:
+                    print_ongoing(f'Removing ECG from trial {t}')
+                    emg_tmp = np.concatenate([
+                        self.raw_emg[t].values[:,:-2],
+                        emg.remove_ECG(self.raw_emg[t].values[:,-1])[0].reshape(-1,1),
+                        emg.remove_ECG(self.raw_emg[t].values[:,-2])[0].reshape(-1,1)
+                    ], axis=1)
+                    colnames = list(self.raw_emg[t].columns)
+                    self.raw_emg[t] = pd.DataFrame(emg_tmp, columns=colnames)
+                    self.raw_emg[t].to_csv(emg_noecg_filename, index=None)
+                self.raw_emg[t] = self.raw_emg[t].iloc[int(self.get_absolute_indexes()[t][0]*fs_emg):int(self.get_absolute_indexes()[t][-1]*fs_emg),:]
             for t in self.raw_emg.keys():
                 self.raw_emg[t] = self.raw_emg[t].iloc[:,self.muscle_indexes]
 
@@ -483,3 +506,7 @@ class BriskSubject():
             print_error('Invalid muscle config. Setting to all muscles.')
             self.muscle_indexes = list(range(14)) # Change here for all muscles
         self.raw_emg = {}
+    
+    def filter_ECG(self):
+        self.raw_emg = {}
+        self.get_raw_emg(remove_ecg=True)
