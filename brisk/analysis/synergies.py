@@ -11,7 +11,7 @@ NMF_OPTIONS = {
     'init': 'random'
 }
 
-DS_FACTOR = 30
+DS_FACTOR = 10
 
 # --- VAF Function
 def VAF(true_data, rec_data):

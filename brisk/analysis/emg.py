@@ -15,7 +15,7 @@ def filter_EMG(signal_in):
 
 # --- Envelope extraction
 def envelope_EMG(signal_in):
-    b, a = sgn.butter(3, 5/(fs_emg/2), btype='lowpass')
+    b, a = sgn.butter(3, 10/(fs_emg/2), btype='lowpass')
     env = sgn.filtfilt(b, a, np.abs(signal_in), axis=0)
     env[np.where(env<1e-4*np.max(env))] = 1e-4*np.max(env)
     return env

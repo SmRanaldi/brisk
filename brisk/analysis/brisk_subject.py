@@ -216,7 +216,7 @@ class BriskSubject():
     # --- Get indexes
     def get_indexes(self):
         idx = self.get_absolute_indexes()
-        indexes_out = {k: np.asarray(v-v[0], dtype='int') for k,v in idx.items()}
+        indexes_out = {k: np.asarray(v-v[0]) for k,v in idx.items()}
         return indexes_out
 
     # --- Get cycle indexes from markers
@@ -381,7 +381,7 @@ class BriskSubject():
         if not all([self.H_tot.keys(), self.W_tot.keys(), self.VAF_curve.keys(), self.VAF_muscles.keys()]):
             print_ongoing('Extracting synergies...')
             for t in emg_tmp.keys():
-                self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t].values, events_tmp[t])
+                self.VAF_curve[t], self.W_tot[t], self.H_tot[t], self.VAF_muscles[t] = extract_synergies(emg_tmp[t].values, events_tmp[t], ds_factor=10)
         return self.VAF_curve, self.W_tot, self.H_tot, self.VAF_muscles
 
     # --- Plot VAF curves
@@ -400,6 +400,17 @@ class BriskSubject():
             ax[0,i].grid('on')
             ax[1,i].grid('on')
         plt.show()
+
+    # --- Get VAF Curve
+    def get_VAF_curve(self, mode='global'):
+        VAF_tmp, _, _, VAFm_tmp = self.get_synergies()
+        if mode=='global':
+            return VAF_tmp
+        elif mode=='muscles':
+            return VAFm_tmp
+        else:
+            print_error('Invalid VAF mode, returning global.')
+            return VAF_tmp
 
     # --- Set number of synergies
     def set_nsyn(self, n_in):
