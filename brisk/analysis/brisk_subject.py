@@ -347,18 +347,18 @@ class BriskSubject():
         return self.phase_duration
     
     # --- Fit to phases
-    def fit_to_phases(self, data_in):
+    def fit_to_phases(self, data_in, method='mean'):
         if not self.phases.keys():
             self.get_zones()
         data = {k: sgn.resample(v, self.phases[k].size) for k, v in data_in.items()}
-        out = {k: kinematics.average_by_phase(v, self.phases[k]) for k, v in data.items()}
+        out = {k: kinematics.average_by_phase(v, self.phases[k], method) for k, v in data.items()}
         return out
 
     # --- Plot fitted data
-    def plot_to_phases(self, data_in):
+    def plot_to_phases(self, data_in, method='mean'):
         if not self.phases.keys():
             self.get_zones()
-        matrices_in = self.fit_to_phases(data_in)
+        matrices_in = self.fit_to_phases(data_in, method)
         matrices_tot = np.asarray([v for v in matrices_in.values()])
         min_value, max_value = np.min(matrices_tot), np.max(matrices_tot)
         fig, ax = plt.subplots(int(len(data_in.keys())/2), 2, figsize=(16,16), facecolor='w')
@@ -414,6 +414,8 @@ class BriskSubject():
         if self.n_syn is None:
             print_error('Define number of synergies before extracting components')
         else:
+            if not all([self.H_tot.keys(), self.W_tot.keys(), self.VAF_curve.keys(), self.VAF_muscles.keys()]):
+                self.get_synergies()
             for t in self.W_tot.keys():
                 self.W[t] = np.asarray(self.W_tot[t][self.n_syn - 1])
                 self.H[t] = np.asarray(self.H_tot[t][self.n_syn - 1])
@@ -424,11 +426,12 @@ class BriskSubject():
         return self.W, self.H, self.VAF_extraction
 
     # --- Order synergies
-    def order_synergies(self):
+    def order_synergies(self, W_ref=None):
         W_all, H_all, _ = self.get_synergy_components()
         trials_ = self.get_trials()
-        W_ref = W_all[trials_[0]]
-        for t in trials_[1:]:
+        if W_ref is None:
+            W_ref = W_all[trials_[0]]
+        for t in trials_:
             sort_idx = sort_W(W_ref, W_all[t])
             W_all[t] = W_all[t][:,sort_idx]
             H_all[t] = H_all[t][sort_idx,:]
@@ -486,7 +489,7 @@ class BriskSubject():
     def set_muscles(self, str_in):
         if str_in == 'all':
             print_success('EMG analysis set to all muscles')
-            self.muscle_indexes = list(range(14)) # Change here for all muscles
+            self.muscle_indexes = list(range(16)) # Change here for all muscles
         elif str_in == 'legs':
             print_success('EMG analysis set to both legs')
             self.muscle_indexes = [0,1,2,3,4,5,6,7,12,13]

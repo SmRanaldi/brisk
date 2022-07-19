@@ -8,6 +8,7 @@ import seaborn as sns
 import warnings
 
 from brisk import fs_imu
+from brisk.utils.cl import print_error
 
 # --- Normalize imu data
 def normalize_imu_data(data_in):
@@ -74,14 +75,26 @@ def phase_count(data_in_raw, limits):
     return out_phases, idx_phase
 
 # --- Average a signal by phase
-def average_by_phase(data_in, idx_phase):
+def average_by_phase(data_in, idx_phase, method='mean'):
     out = np.zeros((3,3))
     for i in range(9):
         col = i%3
         row = int(i/3)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
+            if method=='mean':
+                out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
+            elif method=='median':
+                out[row,col] = np.median(data_in[np.where(idx_phase==i)[0]])
+            elif method=='max':
+                out[row,col] = np.max(data_in[np.where(idx_phase==i)[0]])
+            elif method=='min':
+                out[row,col] = np.min(data_in[np.where(idx_phase==i)[0]])
+            elif method=='sum':
+                out[row,col] = np.sum(data_in[np.where(idx_phase==i)[0]])
+            else:
+                print_error('Wrong averaging method selected, using mean.')
+                out[row,col] = np.mean(data_in[np.where(idx_phase==i)[0]])
     return np.nan_to_num(out)
 
 # --- Plot phases heatmap
