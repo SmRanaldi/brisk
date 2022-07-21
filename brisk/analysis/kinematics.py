@@ -98,7 +98,7 @@ def average_by_phase(data_in, idx_phase, method='mean'):
     return np.nan_to_num(out)
 
 # --- Plot phases heatmap
-def plot_phases(matrix_in, ax, vmin=0, vmax=1):
+def plot_phases(matrix_in, ax, vmin=0, vmax=1, plot_center=True):
     heatmap_args = {
         'cbar': False,
         'annot': True,
@@ -112,3 +112,15 @@ def plot_phases(matrix_in, ax, vmin=0, vmax=1):
         'vmax': vmax,
     }
     sns.heatmap(matrix_in, **heatmap_args, ax=ax)
+    if plot_center:
+        matrix_norm = (matrix_in - np.min(matrix_in))/np.ptp(matrix_in)
+        half_step = 1.5
+        x = 0
+        y = 0
+        for i in range(matrix_norm.shape[0]):
+            for j in range(matrix_norm.shape[1]):
+                y += i * half_step * matrix_norm[i,j]
+                x += j * half_step * matrix_norm[i,j]
+        x /= np.sum(matrix_norm)
+        y /= np.sum(matrix_norm)
+        ax.plot(x, y, '.', ms=25, c='c', alpha=0.75)

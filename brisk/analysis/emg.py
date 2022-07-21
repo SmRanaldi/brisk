@@ -24,7 +24,7 @@ def envelope_EMG(signal_in):
 def coactivation_EMG(signal_in, events):
     env = envelope_EMG(filter_EMG(signal_in))
     n_muscles = env.shape[1]
-    env = normalize_EMG(env, events)
+    env = normalize_EMG(env.copy(), events)
 
     d = 0
     for i in range(n_muscles-1):
