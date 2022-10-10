@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial import distance_matrix
+import scipy.signal as sgn
 
 def recurrence_distance_matrix(signal_in, ds_step):
     signal_in = signal_in[::ds_step,:]
@@ -39,3 +40,13 @@ def recurrence_rate(map_in):
     for i in range(N):
         map_out[i,i] = 0
     return np.sum(map_out)/(N**2-N)
+
+def normalize_trunk_data(data_in):
+
+    b, a = sgn.butter(3, 5/102.4, btype='lowpass')
+    data_in = sgn.filtfilt(b, a, data_in, axis=0)
+
+    b, a = sgn.butter(3, 0.1/102.4, btype='highpass')
+    data_in = sgn.filtfilt(b, a, data_in, axis=0)
+
+    return data_in

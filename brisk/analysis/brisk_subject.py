@@ -8,7 +8,7 @@ import json
 import itertools
 
 from brisk import config_dir, out_dir, fs_marker, fs_imu, fs_emg
-from brisk.analysis import segmentation, parameters, kinematics, emg
+from brisk.analysis import segmentation, parameters, kinematics, emg, rqa
 from brisk.analysis.synergies import VAF, extract_synergies, nnr, sort_W
 from brisk.utils.cl import print_error, print_ongoing, print_success, print_warning
 from brisk.utils import path
@@ -90,8 +90,16 @@ class BriskSubject():
                 ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_imu):int(self.get_absolute_indexes()[t][-1]*fs_imu),:]
                 for t in self.get_trials()
             }
+            b, a = sgn.butter(N=3, Wn=20/(fs_emg/2), btype='lowpass')
+            self.raw_imu = {k: pd.DataFrame(data=sgn.filtfilt(b, a, v.values), columns=v.columns) for k, v in self.raw_imu.items()}
 
         return self.raw_imu
+    
+    # --- Get segmented IMU data
+    def get_segmented_imu(self):
+        if not self.segmented_data:
+            self.import_data()
+        return self.segmented_data
 
     # --- Import EMG
     def get_raw_emg(self, remove_ecg=False, with_ecg=False):
@@ -240,24 +248,25 @@ class BriskSubject():
     # --- Import all available data
     def import_data(self):
 
-        self.get_raw_imu()
+        if not self.cycle_events:
+            self.get_raw_imu()
 
-        if path.search_subject(self.name):
-            self.trials = path.get_trials(self.name)
+            if path.search_subject(self.name):
+                self.trials = path.get_trials(self.name)
 
-        self.segmented_data = {t:
-            segmentation.get_filtered_data(self.name, t)
-            for t in self.trials
-            if path.search_trial(self.name, t)
-        }
-        self.cycle_events = {t:
-            segmentation.load_indexes(self.name, t)/fs_imu
-            for t in self.trials
-            if path.search_trial(self.name, t)
-        }
-        self.age, self.weight, self.height = path.get_anthropometrics(self.name)
-        if any([x==None for x in [self.age, self.weight, self.age]]):
-            print_warning('Anthropometrics not found.')
+            self.segmented_data = {t:
+                segmentation.get_filtered_data(self.name, t)
+                for t in self.trials
+                if path.search_trial(self.name, t)
+            }
+            self.cycle_events = {t:
+                segmentation.load_indexes(self.name, t)/fs_imu
+                for t in self.trials
+                if path.search_trial(self.name, t)
+            }
+            self.age, self.weight, self.height = path.get_anthropometrics(self.name)
+            if any([x==None for x in [self.age, self.weight, self.age]]):
+                print_warning('Anthropometrics not found.')
 
 
     # --- Get average profiles
@@ -374,6 +383,101 @@ class BriskSubject():
         plt.show(fig)
         return matrices_in
 
+    # --- Get recurrence rate
+    def get_recurrence_rate(self, ds_step=5, n_cycles=5, samples_to_skip = 1500, direction='plane'):
+        self.import_data()
+        if direction == 'plane':
+            col_idx = [0,1]
+        elif direction == 'ml':
+            col_idx = [0]
+        elif direction == 'ap':
+            col_idx = [1]
+        else:
+            col_idx = [0,1]
+        l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
+        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
+        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
+        rr = {
+            k:
+            rqa.recurrence_rate(rqa.recurrence_matrix(v[:l_cycle[k]*n_cycles], ds_step))
+            for k, v in data.items()
+        }
+        return rr
+
+    # --- Get recurrence matrix
+    def get_recurrence_matrix(self, ds_step=5, n_cycles=5, samples_to_skip = 1500, direction='plane'):
+        self.import_data()
+        if direction == 'plane':
+            col_idx = [0,1]
+        elif direction == 'ml':
+            col_idx = [0]
+        elif direction == 'ap':
+            col_idx = [1]
+        else:
+            col_idx = [0,1]
+        l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
+        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
+        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
+        rr = {
+            k:
+            rqa.recurrence_matrix(v[:l_cycle[k]*n_cycles], ds_step)
+            for k, v in data.items()
+        }
+        return rr
+
+    # --- Get embedded recurrence rate
+    def get_embedded_recurrence_rate(self, ds_step=5, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction = 'plane'):
+        self.import_data()
+        if direction == 'plane':
+            col_idx = [0,1]
+        elif direction == 'ml':
+            col_idx = [0]
+        elif direction == 'ap':
+            col_idx = [1]
+        else:
+            col_idx = [0,1]
+        if tau is None:
+            l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
+        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
+        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
+        rr = {
+            k:
+            rqa.recurrence_rate(rqa.embedded_recurrence_matrix(
+                v, 
+                ds_step, 
+                tau=l_cycle[k], 
+                m=n_dim, 
+                n_tau=n_cyc))
+            for k, v in data.items()
+        }
+        return rr
+
+    # --- Get embedded recurrence matrix
+    def get_embedded_recurrence_matrix(self, ds_step=5, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction='plane'):
+        self.import_data()
+        if direction == 'plane':
+            col_idx = [0,1]
+        elif direction == 'ml':
+            col_idx = [0]
+        elif direction == 'ap':
+            col_idx = [1]
+        else:
+            col_idx = [0,1]
+        if tau is None:
+            l_cycle = {k: int(np.mean(np.diff(v))*102.4) for k, v in self.cycle_events.items()}
+        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
+        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
+        rr = {
+            k:
+            rqa.embedded_recurrence_matrix(
+                v, 
+                ds_step, 
+                tau=l_cycle[k], 
+                m=n_dim, 
+                n_tau=n_cyc)
+            for k, v in data.items()
+        }
+        return rr
 
     # *********** Synergies functions *************
 
