@@ -97,7 +97,7 @@ class BriskSubject():
     
     # --- Get segmented IMU data
     def get_segmented_imu(self):
-        if not self.segmented_data:
+        if not self.segmented_data.keys():
             self.import_data()
         return self.segmented_data
 
@@ -248,7 +248,7 @@ class BriskSubject():
     # --- Import all available data
     def import_data(self):
 
-        if not self.cycle_events:
+        if not self.cycle_events.keys():
             self.get_raw_imu()
 
             if path.search_subject(self.name):
