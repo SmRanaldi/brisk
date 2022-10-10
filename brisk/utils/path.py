@@ -1,5 +1,4 @@
 from tkinter import Tk, filedialog
-from termcolor import colored
 
 import os
 import json

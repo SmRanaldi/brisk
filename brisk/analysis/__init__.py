@@ -24,6 +24,13 @@ from .kinematics import(
     average_by_phase,
     plot_phases,
 )
+from .rqa import(
+    recurrence_distance_matrix,
+    embedded_recurrence_distance_matrix,
+    recurrence_rate,
+    recurrence_matrix,
+    embedded_recurrence_matrix,
+)
 
 __all__ = [
     BriskSubject,
@@ -44,4 +51,9 @@ __all__ = [
     envelope_EMG,
     average_by_phase,
     plot_phases,
+    recurrence_distance_matrix,
+    embedded_recurrence_distance_matrix,
+    recurrence_rate,
+    recurrence_matrix,
+    embedded_recurrence_matrix,
 ]

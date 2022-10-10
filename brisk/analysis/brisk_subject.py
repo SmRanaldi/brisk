@@ -374,6 +374,9 @@ class BriskSubject():
         plt.show(fig)
         return matrices_in
 
+
+    # *********** Synergies functions *************
+
     # --- Get synergies
     def get_synergies(self):
         emg_tmp = self.get_raw_emg()

@@ -58,3 +58,4 @@ test*
 brisk/config/directories.json
 notebooks-test/
 notebooks/*.pdf
+reports/
