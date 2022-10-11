@@ -41,6 +41,23 @@ def recurrence_rate(map_in):
         map_out[i,i] = 0
     return np.sum(map_out)/(N**2-N)
 
+def determinism(map_in):
+    map_out = map_in.copy()
+    N = map_in.shape[0]
+    for i in range(N):
+        map_out[i,i] = 0
+    n_det = 0
+    for i in range(1,N-1):
+        for j in range(1,N-1):
+            if map_out[i,j]:
+                if map_out[i+1,j+1]:
+                    n_det += 1
+                elif map_out[i+1,j+1]:
+                    n_det += 1
+    return 2*n_det/(N**2-N)
+                
+
+
 def normalize_trunk_data(data_in):
 
     b, a = sgn.butter(3, 5/102.4, btype='lowpass')
