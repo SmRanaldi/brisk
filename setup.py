@@ -14,7 +14,7 @@ setup(
         'pytz',
         'six',
         'wincertstore',
-        'matplotlib',
+        'matplotlib==3.5',
         'dtaidistance',
     ],
     entry_points = {

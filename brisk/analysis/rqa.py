@@ -54,7 +54,7 @@ def determinism(map_in):
                     n_det += 1
                 elif map_out[i-1,j-1]:
                     n_det += 1
-    return 2*n_det/(N**2-N)
+    return n_det/(N**2-N)
 
 def normalize_trunk_data(data_in):
 
