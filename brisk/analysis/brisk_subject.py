@@ -383,77 +383,8 @@ class BriskSubject():
         plt.show(fig)
         return matrices_in
 
-    # --- Get recurrence rate
-    def get_recurrence_rate(self, ds_step=5, n_cycles=5, samples_to_skip = 1500, direction='plane'):
-        self.import_data()
-        if direction == 'plane':
-            col_idx = [0,1]
-        elif direction == 'ml':
-            col_idx = [0]
-        elif direction == 'ap':
-            col_idx = [1]
-        else:
-            col_idx = [0,1]
-        l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
-        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
-        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
-        rr = {
-            k:
-            rqa.recurrence_rate(rqa.recurrence_matrix(v[:l_cycle[k]*n_cycles], ds_step))
-            for k, v in data.items()
-        }
-        return rr
-
-    # --- Get recurrence matrix
-    def get_recurrence_matrix(self, ds_step=5, n_cycles=5, samples_to_skip = 1500, direction='plane'):
-        self.import_data()
-        if direction == 'plane':
-            col_idx = [0,1]
-        elif direction == 'ml':
-            col_idx = [0]
-        elif direction == 'ap':
-            col_idx = [1]
-        else:
-            col_idx = [0,1]
-        l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
-        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
-        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
-        rr = {
-            k:
-            rqa.recurrence_matrix(v[:l_cycle[k]*n_cycles], ds_step)
-            for k, v in data.items()
-        }
-        return rr
-
-    # --- Get embedded recurrence rate
-    def get_embedded_recurrence_rate(self, ds_step=5, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction = 'plane'):
-        self.import_data()
-        if direction == 'plane':
-            col_idx = [0,1]
-        elif direction == 'ml':
-            col_idx = [0]
-        elif direction == 'ap':
-            col_idx = [1]
-        else:
-            col_idx = [0,1]
-        if tau is None:
-            l_cycle = {k: int(np.mean(np.diff(v))*fs_imu) for k, v in self.cycle_events.items()}
-        data = {k: v[self.segmentation_labels].values[samples_to_skip:,col_idx] for k,v in self.segmented_data.items()}
-        data = {k: rqa.normalize_trunk_data(v) for k,v in data.items()}
-        rr = {
-            k:
-            rqa.recurrence_rate(rqa.embedded_recurrence_matrix(
-                v, 
-                ds_step, 
-                tau=l_cycle[k], 
-                m=n_dim, 
-                n_tau=n_cyc))
-            for k, v in data.items()
-        }
-        return rr
-
     # --- Get embedded recurrence matrix
-    def get_embedded_recurrence_matrix(self, ds_step=5, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction='plane'):
+    def get_embedded_recurrence_matrix(self, ds_step=10, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction='plane'):
         self.import_data()
         if direction == 'plane':
             col_idx = [0,1]

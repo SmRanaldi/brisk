@@ -49,10 +49,10 @@ def determinism(map_in):
     n_det = 0
     for i in range(1,N-1):
         for j in range(1,N-1):
-            if map_out[i,j]:
-                if map_out[i+1,j+1]:
+            if map_out[i,j]==1:
+                if map_out[i+1,j+1]==1:
                     n_det += 1
-                elif map_out[i-1,j-1]:
+                elif map_out[i-1,j-1]==1:
                     n_det += 1
     return n_det/(N**2-N)
 
