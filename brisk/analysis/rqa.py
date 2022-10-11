@@ -52,11 +52,9 @@ def determinism(map_in):
             if map_out[i,j]:
                 if map_out[i+1,j+1]:
                     n_det += 1
-                elif map_out[i+1,j+1]:
+                elif map_out[i-1,j-1]:
                     n_det += 1
     return 2*n_det/(N**2-N)
-                
-
 
 def normalize_trunk_data(data_in):
 
