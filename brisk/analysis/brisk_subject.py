@@ -90,8 +90,8 @@ class BriskSubject():
                 ])).iloc[int(self.get_absolute_indexes()[t][0]*fs_imu):int(self.get_absolute_indexes()[t][-1]*fs_imu),:]
                 for t in self.get_trials()
             }
-            b, a = sgn.butter(N=3, Wn=20/(fs_imu/2), btype='lowpass')
-            self.raw_imu = {k: pd.DataFrame(data=sgn.filtfilt(b, a, v.values), columns=v.columns) for k, v in self.raw_imu.items()}
+            # b, a = sgn.butter(N=3, Wn=20/(fs_imu/2), btype='lowpass')
+            # self.raw_imu = {k: pd.DataFrame(data=sgn.filtfilt(b, a, v.values), columns=v.columns) for k, v in self.raw_imu.items()}
 
         return self.raw_imu
     

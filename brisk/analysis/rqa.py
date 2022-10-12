@@ -59,9 +59,9 @@ def determinism(map_in):
 def normalize_trunk_data(data_in):
 
     b, a = sgn.butter(3, 5/102.4, btype='lowpass')
-    data_in = sgn.filtfilt(b, a, data_in, axis=0)
+    data_out = sgn.filtfilt(b, a, data_in, axis=0)
 
     b, a = sgn.butter(3, 0.1/102.4, btype='highpass')
-    data_in = sgn.filtfilt(b, a, data_in, axis=0)
+    data_out = sgn.filtfilt(b, a, data_out, axis=0)
 
-    return data_in
+    return data_out
