@@ -384,7 +384,7 @@ class BriskSubject():
         return matrices_in
 
     # --- Get embedded recurrence matrix
-    def get_recurrence_matrix(self, ds_step=10, samples_to_skip = 1500, tau=None, n_dim=2, n_cyc=5, direction='plane'):
+    def get_recurrence_matrix(self, ds_step=10, samples_to_skip = 1500, tau=None, n_dim=5, n_cyc=10, direction='plane'):
         self.import_data()
         if direction == 'plane':
             col_idx = [0,1]
