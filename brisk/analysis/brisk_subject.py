@@ -246,7 +246,7 @@ class BriskSubject():
     # --- Get package rate
     def get_rate(self):
         idx_tmp = self.get_absolute_indexes()
-        out = {k: np.mean(60/np.diff(v)) for k, v in idx_tmp.items()}
+        out = {k: np.median(60/np.diff(v)) for k, v in idx_tmp.items()}
         return out
 
     # *********** Import functions *************
