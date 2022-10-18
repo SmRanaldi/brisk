@@ -242,6 +242,12 @@ class BriskSubject():
             print_error('Marker events not found.')
 
         return self.cycle_events_marker
+    
+    # --- Get package rate
+    def get_rate(self):
+        idx_tmp = self.get_absolute_indexes()
+        out = {k: np.mean(60/np.diff(v)) for k, v in idx_tmp.items()}
+        return out
 
     # *********** Import functions *************
 
