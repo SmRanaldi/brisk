@@ -6,7 +6,7 @@ setup(
     name = 'brisk',
     packages = find_packages(),
     install_requires = [
-        'certifi==2021.10.8',
+        'certifi==2023.7.22',
         'notebook==6.4.8',
         'numpy==1.22.3',
         'pandas==1.4.1',
